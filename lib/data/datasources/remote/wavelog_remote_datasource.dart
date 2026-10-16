@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/adif_parser.dart';
+import '../../../core/utils/local_network.dart';
 import '../../models/callsign_lookup_model.dart';
 import '../../models/confirmation_model.dart';
 import '../../models/contest_model.dart';
@@ -944,6 +945,11 @@ class WavelogRemoteDatasource {
         if (inner is HandshakeException) {
           return const SslException(
               'SSL certificate error, the server certificate chain could not be verified.');
+        }
+        // Blocked by the local-network-permission interceptor in
+        // dio_provider.dart before the request ever reached the socket.
+        if (inner is LocalNetworkPermissionDeniedError) {
+          return const LocalNetworkPermissionException();
         }
         if (inner is SocketException) {
           final msg = inner.message.toLowerCase();

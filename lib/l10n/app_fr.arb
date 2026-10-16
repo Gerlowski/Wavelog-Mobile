@@ -200,7 +200,7 @@
   "selectSaveLocation": "Choisir l'emplacement",
   "copySuffix": "(Copie)",
   "errNetwork": "Pas de connexion — vérifiez votre réseau",
-  "errTimeout": "Délai de connexion dépassé",
+  "errLocalNetworkPermission": "Accès au réseau local requis, autorisez-le pour cette application dans les paramètres Android", "errTimeout": "Délai de connexion dépassé",
   "errUnauthorized": "Clé API invalide",
   "settingsTitle": "Paramètres",
   "connectionSection": "Connexion",

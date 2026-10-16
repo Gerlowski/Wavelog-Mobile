@@ -253,7 +253,7 @@
   "selectSaveLocation": "Выбрать место сохранения",
   "copySuffix": "(Копия)",
   "errNetwork": "Нет соединения — проверьте сеть",
-  "errTimeout": "Превышено время ожидания",
+  "errLocalNetworkPermission": "Требуется доступ к локальной сети, разрешите его для этого приложения в настройках Android", "errTimeout": "Превышено время ожидания",
   "errUnauthorized": "Неверный ключ API",
   "settingsTitle": "Настройки",
   "connectionSection": "Соединение",

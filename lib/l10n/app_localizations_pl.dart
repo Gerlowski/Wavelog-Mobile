@@ -586,6 +586,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get errTimeout => 'Przekroczono limit czasu połączenia';
 
   @override
+  String get errLocalNetworkPermission =>
+      'Wymagany dostęp do sieci lokalnej, zezwól na niego dla tej aplikacji w Ustawieniach Androida';
+
+  @override
   String get errUnauthorized => 'Nieprawidłowy klucz API';
 
   @override

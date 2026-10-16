@@ -587,6 +587,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errTimeout => 'Превышено время ожидания';
 
   @override
+  String get errLocalNetworkPermission =>
+      'Требуется доступ к локальной сети, разрешите его для этого приложения в настройках Android';
+
+  @override
   String get errUnauthorized => 'Неверный ключ API';
 
   @override

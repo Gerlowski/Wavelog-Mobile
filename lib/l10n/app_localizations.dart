@@ -1216,6 +1216,12 @@ abstract class AppLocalizations {
   /// **'Connection timed out'**
   String get errTimeout;
 
+  /// No description provided for @errLocalNetworkPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Local network access needed, allow it for this app in Android Settings'**
+  String get errLocalNetworkPermission;
+
   /// No description provided for @errUnauthorized.
   ///
   /// In en, this message translates to:

@@ -230,7 +230,7 @@
   "selectSaveLocation": "保存先を選択",
   "copySuffix": "(コピー)",
   "errNetwork": "接続なし — ネットワークを確認してください",
-  "errTimeout": "接続タイムアウト",
+  "errLocalNetworkPermission": "ローカルネットワークへのアクセスが必要です、Androidの設定でこのアプリに許可してください", "errTimeout": "接続タイムアウト",
   "errUnauthorized": "無効な APIキー",
 
   "settingsTitle": "設定",

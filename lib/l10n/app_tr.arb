@@ -202,6 +202,8 @@
   "selectSaveLocation": "Kayıt konumunu seçin",
   "copySuffix": "(Kopya)",
   "errNetwork": "Bağlantı yok — ağınızı kontrol edin",
+  "errLocalNetworkPermission": "Yerel ağ erişimi gerekiyor, Android Ayarlar'da bu uygulama için izin verin",
+  "@errLocalNetworkPermission": {},
   "errTimeout": "Bağlantı zaman aşımına uğradı",
   "errUnauthorized": "Geçersiz API anahtarı",
 

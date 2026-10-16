@@ -202,7 +202,7 @@
   "selectSaveLocation": "Wybierz lokalizację zapisu",
   "copySuffix": "(Kopia)",
   "errNetwork": "Brak połączenia — sprawdź sieć",
-  "errTimeout": "Przekroczono limit czasu połączenia",
+  "errLocalNetworkPermission": "Wymagany dostęp do sieci lokalnej, zezwól na niego dla tej aplikacji w Ustawieniach Androida", "errTimeout": "Przekroczono limit czasu połączenia",
   "errUnauthorized": "Nieprawidłowy klucz API",
 
   "settingsTitle": "Ustawienia",

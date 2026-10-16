@@ -589,6 +589,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errTimeout => 'Verbindung abgelaufen';
 
   @override
+  String get errLocalNetworkPermission =>
+      'Zugriff auf das lokale Netzwerk erforderlich, erlauben Sie dies für diese App in den Android-Einstellungen';
+
+  @override
   String get errUnauthorized => 'Ungültiger API-Schlüssel';
 
   @override

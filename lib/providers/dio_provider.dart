@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/utils/local_network.dart';
 import 'settings_provider.dart';
 
 final dioProvider = Provider<Dio>((ref) {
@@ -75,6 +76,29 @@ Dio buildWavelogDio(String baseUrl,
         ..badCertificateCallback = (cert, host, port) => true,
     );
   }
+
+  // Android 17+ (targetSdk 37) blocks any connection to a private/LAN
+  // address (e.g. a self-hosted Wavelog server on the home network) unless
+  // ACCESS_LOCAL_NETWORK is granted, otherwise it silently times out at the
+  // socket level instead of failing fast. Checked (and requested if needed)
+  // before the request leaves the device, so a denial surfaces as a clear
+  // LocalNetworkPermissionException instead of a generic connect timeout.
+  dio.interceptors.add(InterceptorsWrapper(
+    onRequest: (options, handler) async {
+      if (isLikelyLocalNetworkHost(options.uri.host)) {
+        final granted = await ensureLocalNetworkPermission();
+        if (!granted) {
+          handler.reject(DioException(
+            requestOptions: options,
+            type: DioExceptionType.connectionError,
+            error: const LocalNetworkPermissionDeniedError(),
+          ));
+          return;
+        }
+      }
+      handler.next(options);
+    },
+  ));
 
   // Wavelog sometimes returns JSON with non-standard Content-Type headers,
   // so Dio leaves the response as a raw String. This interceptor decodes it.

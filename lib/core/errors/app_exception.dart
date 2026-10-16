@@ -22,6 +22,16 @@ class SslException extends AppException {
       : super(code: 'SSL_ERROR');
 }
 
+/// The request targeted a private/LAN address and Android 17+'s
+/// ACCESS_LOCAL_NETWORK runtime permission hasn't been granted, distinct
+/// from NetworkException so the UI can point the user at the actual fix
+/// (grant the permission) instead of a generic "server unreachable" message.
+class LocalNetworkPermissionException extends AppException {
+  const LocalNetworkPermissionException(
+      [super.message = 'Yerel ağ izni verilmedi'])
+      : super(code: 'LOCAL_NETWORK_PERMISSION_ERROR');
+}
+
 class TimeoutException extends AppException {
   const TimeoutException([super.message = 'Bağlantı zaman aşımına uğradı'])
       : super(code: 'TIMEOUT');

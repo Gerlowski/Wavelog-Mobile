@@ -587,6 +587,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errTimeout => 'Délai de connexion dépassé';
 
   @override
+  String get errLocalNetworkPermission =>
+      'Accès au réseau local requis, autorisez-le pour cette application dans les paramètres Android';
+
+  @override
   String get errUnauthorized => 'Clé API invalide';
 
   @override
