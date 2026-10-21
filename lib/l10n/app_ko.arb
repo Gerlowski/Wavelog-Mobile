@@ -230,7 +230,7 @@
   "selectSaveLocation": "저장 위치 선택",
   "copySuffix": "(복사본)",
   "errNetwork": "연결 없음 — 네트워크를 확인하세요",
-  "errTimeout": "연결 시간 초과",
+  "errLocalNetworkPermission": "로컬 네트워크 접근이 필요합니다, Android 설정에서 이 앱에 권한을 허용하세요", "errTimeout": "연결 시간 초과",
   "errUnauthorized": "잘못된 API 키",
 
   "settingsTitle": "설정",

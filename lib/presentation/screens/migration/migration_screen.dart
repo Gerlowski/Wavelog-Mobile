@@ -75,6 +75,14 @@ class _MigrationScreenState extends ConsumerState<MigrationScreen> {
         _validating = false;
         _tokenError = l10n.migrationTokenInvalid;
       });
+    } on LocalNetworkPermissionException {
+      // A blocked LAN connection isn't a missing-patch problem either, same
+      // reasoning as ForbiddenException above, don't send a LAN user down
+      // the wrong troubleshooting path.
+      setState(() {
+        _validating = false;
+        _tokenError = l10n.errLocalNetworkPermission;
+      });
     } catch (_) {
       // Other error — patch likely not installed
       setState(() => _validating = false);

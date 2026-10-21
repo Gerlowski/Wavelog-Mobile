@@ -228,7 +228,7 @@
   "copySuffix": "(Kopie)",
 
   "errNetwork": "Keine Verbindung — Netzwerk prüfen",
-  "errTimeout": "Verbindung abgelaufen",
+  "errLocalNetworkPermission": "Zugriff auf das lokale Netzwerk erforderlich, erlauben Sie dies für diese App in den Android-Einstellungen", "errTimeout": "Verbindung abgelaufen",
   "errUnauthorized": "Ungültiger API-Schlüssel",
 
   "settingsTitle": "Einstellungen",

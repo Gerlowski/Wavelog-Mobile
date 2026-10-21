@@ -578,6 +578,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errTimeout => '接続タイムアウト';
 
   @override
+  String get errLocalNetworkPermission =>
+      'ローカルネットワークへのアクセスが必要です、Androidの設定でこのアプリに許可してください';
+
+  @override
   String get errUnauthorized => '無効な APIキー';
 
   @override

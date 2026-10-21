@@ -110,6 +110,13 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
         _testSuccess = false;
         _testResult = context.l10n.errTimeout;
       });
+    } on LocalNetworkPermissionException {
+      if (!mounted) return;
+      setState(() {
+        _testing = false;
+        _testSuccess = false;
+        _testResult = context.l10n.errLocalNetworkPermission;
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() {

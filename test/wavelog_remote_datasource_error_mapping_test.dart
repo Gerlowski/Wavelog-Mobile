@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wavelog_mobile/core/errors/app_exception.dart';
+import 'package:wavelog_mobile/core/utils/local_network.dart';
 import 'package:wavelog_mobile/data/datasources/remote/wavelog_remote_datasource.dart';
 
 /// A minimal [HttpClientAdapter] that always answers with a canned status
@@ -85,4 +86,37 @@ void main() {
       }
     });
   });
+
+  group('WavelogRemoteDatasource local-network-permission mapping', () {
+    test(
+        'a connectionError DioException carrying LocalNetworkPermissionDeniedError '
+        '(from dio_provider.dart\'s interceptor) maps to '
+        'LocalNetworkPermissionException', () async {
+      final dio = Dio()..httpClientAdapter = _ThrowingAdapter();
+      final remote = WavelogRemoteDatasource(dio: dio);
+
+      await expectLater(
+        remote.setActiveLogbook(1),
+        throwsA(isA<LocalNetworkPermissionException>()),
+      );
+    });
+  });
+}
+
+/// Simulates the local-network-permission interceptor rejecting a request
+/// before it ever reaches the network, the same way dio_provider.dart's
+/// interceptor does when ACCESS_LOCAL_NETWORK isn't granted.
+class _ThrowingAdapter implements HttpClientAdapter {
+  @override
+  Future<ResponseBody> fetch(RequestOptions options,
+      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+    throw DioException(
+      requestOptions: options,
+      type: DioExceptionType.connectionError,
+      error: const LocalNetworkPermissionDeniedError(),
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
 }

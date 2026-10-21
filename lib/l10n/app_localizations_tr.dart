@@ -587,6 +587,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errTimeout => 'Bağlantı zaman aşımına uğradı';
 
   @override
+  String get errLocalNetworkPermission =>
+      'Yerel ağ erişimi gerekiyor, Android Ayarlar\'da bu uygulama için izin verin';
+
+  @override
   String get errUnauthorized => 'Geçersiz API anahtarı';
 
   @override

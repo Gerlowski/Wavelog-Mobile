@@ -583,6 +583,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errTimeout => 'Connection timed out';
 
   @override
+  String get errLocalNetworkPermission =>
+      'Local network access needed, allow it for this app in Android Settings';
+
+  @override
   String get errUnauthorized => 'Invalid API key';
 
   @override

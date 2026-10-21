@@ -200,7 +200,7 @@
   "selectSaveLocation": "Scegli posizione di salvataggio",
   "copySuffix": "(Copia)",
   "errNetwork": "Nessuna connessione — controlla la rete",
-  "errTimeout": "Connessione scaduta",
+  "errLocalNetworkPermission": "Accesso alla rete locale necessario, consentilo per questa app nelle Impostazioni Android", "errTimeout": "Connessione scaduta",
   "errUnauthorized": "Chiave API non valida",
   "settingsTitle": "Impostazioni",
   "connectionSection": "Connessione",

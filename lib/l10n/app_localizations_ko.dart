@@ -578,6 +578,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errTimeout => '연결 시간 초과';
 
   @override
+  String get errLocalNetworkPermission =>
+      '로컬 네트워크 접근이 필요합니다, Android 설정에서 이 앱에 권한을 허용하세요';
+
+  @override
   String get errUnauthorized => '잘못된 API 키';
 
   @override

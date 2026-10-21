@@ -1,7 +1,7 @@
 name: wavelog_mobile
 description: Wavelog Amateur Radio Logging Mobile App
 publish_to: 'none'
-version: 3.2.8+111
+version: 3.2.9+113
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -46,6 +46,9 @@ dependencies:
 
   # Location
   geolocator: ^12.0.0
+
+  # Permissions (Android 17+ ACCESS_LOCAL_NETWORK)
+  permission_handler: ^13.0.2
 
   # Compass
   flutter_compass: ^0.8.0

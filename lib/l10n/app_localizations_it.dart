@@ -585,6 +585,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get errTimeout => 'Connessione scaduta';
 
   @override
+  String get errLocalNetworkPermission =>
+      'Accesso alla rete locale necessario, consentilo per questa app nelle Impostazioni Android';
+
+  @override
   String get errUnauthorized => 'Chiave API non valida';
 
   @override
