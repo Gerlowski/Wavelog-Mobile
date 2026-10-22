@@ -65,22 +65,34 @@ bool _isLocalIPv6(List<int> b) {
 }
 
 int? _androidSdkIntCache;
-bool _androidSdkIntChecked = false;
 
-/// Cached `Build.VERSION.SDK_INT`, null on non-Android platforms or if the
-/// query fails. Cached because [ensureLocalNetworkPermission] runs on every
-/// local-network request's hot path.
+/// Cached `Build.VERSION.SDK_INT`, null on non-Android platforms. Cached
+/// because [ensureLocalNetworkPermission] runs on every local-network
+/// request's hot path.
+///
+/// Only a *successful* lookup is cached — never a failure. An earlier
+/// version cached "checked" separately from the value, so a transient
+/// failure on the very first call (e.g. the platform channel not being
+/// fully up yet when an auto-sync fires its first request right at app
+/// launch) got locked in as a permanent null for the rest of the app
+/// session: every later request fell through to the broken pre-API-37
+/// permission_handler path this function exists to skip, and only
+/// recovered once something (e.g. opening Settings and testing the
+/// connection, which happens well after startup) happened to trigger
+/// a successful lookup. Reported live: the fix in this file resolved the
+/// local-network block, but it reappeared after a cold app restart until
+/// the user manually ran Test Connection. Retrying on every failure until
+/// one succeeds removes that trap.
 Future<int?> _androidSdkInt() async {
-  if (_androidSdkIntChecked) return _androidSdkIntCache;
-  _androidSdkIntChecked = true;
+  if (_androidSdkIntCache != null) return _androidSdkIntCache;
   if (!Platform.isAndroid) return null;
   try {
-    _androidSdkIntCache =
-        (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    _androidSdkIntCache = sdkInt;
+    return sdkInt;
   } catch (_) {
-    _androidSdkIntCache = null;
+    return null;
   }
-  return _androidSdkIntCache;
 }
 
 /// Ensures [Permission.accessLocalNetwork] is granted, requesting it if
