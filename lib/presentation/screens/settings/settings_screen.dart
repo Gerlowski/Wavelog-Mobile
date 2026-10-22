@@ -14,9 +14,11 @@ import '../../../data/repositories/settings_repository.dart';
 import '../../../providers/dio_provider.dart';
 import '../../../providers/qso_provider.dart';
 import '../../../providers/remote_datasource_provider.dart';
+import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_provider.dart';
 import '../../../providers/statistics_provider.dart';
+import '../rig/rig_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -438,6 +440,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ref.read(settingsProvider.notifier).setDefaultMode(v);
                 }
               },
+            ),
+
+            const SizedBox(height: 24),
+
+            // Radio CAT link
+            _sectionHeader(l10n.rigSection),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.settings_input_antenna),
+              title: Text(l10n.rigScreenTitle),
+              subtitle: Text(
+                ref.watch(rigProvider).status == RigStatus.connected
+                    ? l10n.rigStatusConnected(
+                        ref.watch(rigProvider).device?.name ?? '')
+                    : l10n.rigTileSubtitle,
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const RigScreen()),
+              ),
             ),
 
             const SizedBox(height: 24),

@@ -2288,4 +2288,78 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get syncNothing => 'Nie ma nic do synchronizacji';
+
+  @override
+  String get rigSection => 'Radio (CAT)';
+
+  @override
+  String get rigScreenTitle => 'Połączenie z radiem (CAT)';
+
+  @override
+  String get rigTileSubtitle =>
+      'Odczyt częstotliwości na żywo z radia podłączonego kablem USB';
+
+  @override
+  String get rigProtocolLabel => 'Protokół';
+
+  @override
+  String get rigProtocolIcom => 'Icom CI-V';
+
+  @override
+  String get rigProtocolKenwood => 'Kenwood / Elecraft / Yaesu (FA;)';
+
+  @override
+  String get rigProtocolYaesuLegacy => 'Yaesu FT-817/818/857/897';
+
+  @override
+  String get rigBaudLabel => 'Prędkość (baud)';
+
+  @override
+  String get rigCivAddressLabel => 'Adres CI-V';
+
+  @override
+  String get rigCivAddressHint =>
+      'np. 94 IC-7300, A4 IC-705, 98 IC-7610, A2 IC-9700';
+
+  @override
+  String get rigDevicesLabel => 'Urządzenia USB';
+
+  @override
+  String get rigNoDevices =>
+      'Nie znaleziono portu szeregowego USB. Podłącz radio kablem USB OTG.';
+
+  @override
+  String get rigRefresh => 'Odśwież';
+
+  @override
+  String get rigConnect => 'Połącz';
+
+  @override
+  String get rigDisconnect => 'Rozłącz';
+
+  @override
+  String rigStatusConnected(String device) {
+    return 'Połączono: $device';
+  }
+
+  @override
+  String get rigStatusConnecting => 'Łączenie…';
+
+  @override
+  String get rigStatusDisconnected => 'Nie połączono';
+
+  @override
+  String get rigWaitingForData =>
+      'Czekam na radio… Sprawdź protokół, prędkość i adres CI-V.';
+
+  @override
+  String get rigErrorPermission => 'Brak zgody na dostęp do USB';
+
+  @override
+  String get rigErrorDetached => 'Radio odłączone';
+
+  @override
+  String rigErrorConnection(String code) {
+    return 'Błąd połączenia ($code)';
+  }
 }

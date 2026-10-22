@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/constants/band_mode_data.dart';
+import '../../../core/rig/cat_protocol.dart';
 import '../../../core/utils/error_l10n.dart';
 import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
@@ -24,8 +25,10 @@ import '../../../providers/connectivity_provider.dart';
 import '../../../providers/lookup_provider.dart';
 import '../../../providers/qso_provider.dart';
 import '../../../providers/remote_datasource_provider.dart';
+import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_provider.dart';
+import '../../widgets/rig/rig_link_button.dart';
 
 class AddQsoScreen extends ConsumerStatefulWidget {
   final String? prefillCallsign;
@@ -188,6 +191,14 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _freqCtrl.addListener(_updateAutoSpotStatus);
     if (widget.editQso == null) _freqCtrl.addListener(_saveFreqDebounced);
     _potaInputCtrl.addListener(_onPotaInputChanged);
+    if (edit == null) {
+      // Follow the radio's dial while a CAT link is up; _saveFreqDebounced
+      // then picks the matching band.
+      ref.listenManual<int?>(rigProvider.select((s) => s.frequencyHz),
+          (_, hz) {
+        if (hz != null) _freqCtrl.text = formatRigFreqMhz(hz);
+      });
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (edit == null &&
@@ -202,8 +213,13 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         // A spot-tap prefill already set band/frequency — don't let the
         // last-used-session restore clobber it.
         if (widget.prefillFrequencyMhz == null) {
-          _loadLastBand();
-          _loadLastFreq();
+          final rigHz = ref.read(rigProvider).frequencyHz;
+          if (rigHz != null) {
+            _freqCtrl.text = formatRigFreqMhz(rigHz);
+          } else {
+            _loadLastBand();
+            _loadLastFreq();
+          }
         }
         _loadLastSubmode(_band, _mode);
       }
@@ -1146,6 +1162,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         decoration: InputDecoration(
           labelText: l10n.frequencyField,
           prefixIcon: const Icon(Icons.waves),
+          suffixIcon: const RigLinkButton(),
         ),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         validator: validateFrequency,

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/band_mode_data.dart';
+import '../../../core/rig/cat_protocol.dart';
 import '../../../core/utils/adif_generator.dart';
 import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
@@ -18,7 +19,9 @@ import '../../../providers/connectivity_provider.dart';
 import '../../../providers/lookup_provider.dart';
 import '../../../providers/qso_provider.dart';
 import '../../../providers/remote_datasource_provider.dart';
+import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../widgets/rig/rig_link_button.dart';
 import '../qso/add_qso_screen.dart';
 
 // ── Logged QSO entry (in-memory recent list) ──────────────────────────────────
@@ -112,6 +115,13 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
     final centerFreq = kBandCenterFreqMhz[_band];
     if (centerFreq != null) _freqCtrl.text = centerFreq.toStringAsFixed(3);
     _freqCtrl.addListener(_onFreqChanged);
+    // Follow the radio's dial while a CAT link is up; _onFreqChanged then
+    // picks the matching band.
+    final rigHz = ref.read(rigProvider).frequencyHz;
+    if (rigHz != null) _freqCtrl.text = formatRigFreqMhz(rigHz);
+    ref.listenManual<int?>(rigProvider.select((s) => s.frequencyHz), (_, hz) {
+      if (hz != null) _freqCtrl.text = formatRigFreqMhz(hz);
+    });
     _callsignFocus.addListener(_onCallsignFocusChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_session == null && _contestId.isEmpty) {
@@ -769,6 +779,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
                       labelText: l10n.frequencyField,
                       hintText: '14.225',
                       suffixText: 'MHz',
+                      suffixIcon: const RigLinkButton(),
                       border: const OutlineInputBorder(),
                     ),
                   ),

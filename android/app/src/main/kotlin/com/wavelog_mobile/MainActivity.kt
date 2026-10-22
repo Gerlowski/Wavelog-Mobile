@@ -17,6 +17,7 @@ class MainActivity : FlutterActivity() {
     private var pendingFileName: String? = null
     private var pendingFileContent: String? = null
     private var intentChannel: MethodChannel? = null
+    private var rigSerial: RigSerialPlugin? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -60,6 +61,9 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        // ── Radio CAT over USB serial ────────────────────────────────────
+        rigSerial = RigSerialPlugin(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+
         // ── Intent handler channel ───────────────────────────────────────
         intentChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -82,6 +86,12 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        rigSerial?.close()
+        rigSerial = null
+        super.cleanUpFlutterEngine(flutterEngine)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

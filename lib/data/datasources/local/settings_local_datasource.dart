@@ -1,5 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/rig/cat_protocol.dart';
+import '../../models/rig_config_model.dart';
 import '../../models/settings_model.dart';
 
 class SettingsLocalDatasource {
@@ -184,5 +186,25 @@ class SettingsLocalDatasource {
     await prefs.setString(
         'wl_last_submode_${mode.toLowerCase()}_${band.toLowerCase()}',
         submode.trim());
+  }
+
+  Future<RigConfig> getRigConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    const defaults = RigConfig();
+    final protocol = CatProtocol.values.asNameMap()[
+            prefs.getString('wl_rig_protocol')] ??
+        defaults.protocol;
+    return RigConfig(
+      protocol: protocol,
+      baudRate: prefs.getInt('wl_rig_baud_rate') ?? protocol.defaultBaudRate,
+      civAddress: prefs.getInt('wl_rig_civ_address') ?? defaults.civAddress,
+    );
+  }
+
+  Future<void> saveRigConfig(RigConfig config) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('wl_rig_protocol', config.protocol.name);
+    await prefs.setInt('wl_rig_baud_rate', config.baudRate);
+    await prefs.setInt('wl_rig_civ_address', config.civAddress);
   }
 }

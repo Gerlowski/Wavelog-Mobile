@@ -4419,6 +4419,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing to sync'**
   String get syncNothing;
+
+  /// No description provided for @rigSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Radio (CAT)'**
+  String get rigSection;
+
+  /// No description provided for @rigScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Radio connection (CAT)'**
+  String get rigScreenTitle;
+
+  /// No description provided for @rigTileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the frequency live from a radio connected by USB cable'**
+  String get rigTileSubtitle;
+
+  /// No description provided for @rigProtocolLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get rigProtocolLabel;
+
+  /// No description provided for @rigProtocolIcom.
+  ///
+  /// In en, this message translates to:
+  /// **'Icom CI-V'**
+  String get rigProtocolIcom;
+
+  /// No description provided for @rigProtocolKenwood.
+  ///
+  /// In en, this message translates to:
+  /// **'Kenwood / Elecraft / Yaesu (FA;)'**
+  String get rigProtocolKenwood;
+
+  /// No description provided for @rigProtocolYaesuLegacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Yaesu FT-817/818/857/897'**
+  String get rigProtocolYaesuLegacy;
+
+  /// No description provided for @rigBaudLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Baud rate'**
+  String get rigBaudLabel;
+
+  /// No description provided for @rigCivAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CI-V address'**
+  String get rigCivAddressLabel;
+
+  /// No description provided for @rigCivAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, A2 IC-9700'**
+  String get rigCivAddressHint;
+
+  /// No description provided for @rigDevicesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'USB devices'**
+  String get rigDevicesLabel;
+
+  /// No description provided for @rigNoDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'No USB serial device found. Connect the radio with a USB OTG cable.'**
+  String get rigNoDevices;
+
+  /// No description provided for @rigRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get rigRefresh;
+
+  /// No description provided for @rigConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get rigConnect;
+
+  /// No description provided for @rigDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get rigDisconnect;
+
+  /// No description provided for @rigStatusConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected: {device}'**
+  String rigStatusConnected(String device);
+
+  /// No description provided for @rigStatusConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get rigStatusConnecting;
+
+  /// No description provided for @rigStatusDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get rigStatusDisconnected;
+
+  /// No description provided for @rigWaitingForData.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the radio… Check the protocol, baud rate and CI-V address.'**
+  String get rigWaitingForData;
+
+  /// No description provided for @rigErrorPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'USB permission denied'**
+  String get rigErrorPermission;
+
+  /// No description provided for @rigErrorDetached.
+  ///
+  /// In en, this message translates to:
+  /// **'Radio disconnected'**
+  String get rigErrorDetached;
+
+  /// No description provided for @rigErrorConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error ({code})'**
+  String rigErrorConnection(String code);
 }
 
 class _AppLocalizationsDelegate
