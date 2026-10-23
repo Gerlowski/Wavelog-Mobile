@@ -4420,6 +4420,18 @@ abstract class AppLocalizations {
   /// **'Nothing to sync'**
   String get syncNothing;
 
+  /// No description provided for @openAddQsoOnStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start on Add QSO'**
+  String get openAddQsoOnStart;
+
+  /// No description provided for @openAddQsoOnStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the QSO form right after the app starts; Back leads to Home'**
+  String get openAddQsoOnStartHint;
+
   /// No description provided for @rigSection.
   ///
   /// In en, this message translates to:

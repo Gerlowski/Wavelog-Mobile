@@ -2290,6 +2290,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get syncNothing => 'Nie ma nic do synchronizacji';
 
   @override
+  String get openAddQsoOnStart => 'Start od dodawania QSO';
+
+  @override
+  String get openAddQsoOnStartHint =>
+      'Po uruchomieniu aplikacji od razu otwiera formularz QSO; Wstecz prowadzi do ekranu głównego';
+
+  @override
   String get rigSection => 'Radio (CAT)';
 
   @override

@@ -805,6 +805,8 @@
   "syncNoConnection": "Brak połączenia — synchronizacja ruszy automatycznie po powrocie internetu",
   "syncDone": "Zsynchronizowano QSO: {count}",
   "syncNothing": "Nie ma nic do synchronizacji",
+  "openAddQsoOnStart": "Start od dodawania QSO",
+  "openAddQsoOnStartHint": "Po uruchomieniu aplikacji od razu otwiera formularz QSO; Wstecz prowadzi do ekranu głównego",
   "rigSection": "Radio (CAT)",
   "rigScreenTitle": "Połączenie z radiem (CAT)",
   "rigTileSubtitle": "Odczyt częstotliwości na żywo z radia podłączonego kablem USB",

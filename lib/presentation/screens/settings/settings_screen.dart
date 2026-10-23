@@ -486,6 +486,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ref.read(settingsProvider.notifier).setOfflineMode(v),
             ),
             SwitchListTile(
+              title: Text(l10n.openAddQsoOnStart),
+              subtitle: Text(l10n.openAddQsoOnStartHint),
+              secondary: const Icon(Icons.add_circle_outline),
+              value: settings.openAddQsoOnStart,
+              onChanged: (v) =>
+                  ref.read(settingsProvider.notifier).setOpenAddQsoOnStart(v),
+            ),
+            SwitchListTile(
               title: Text(l10n.potaAutoSpot),
               subtitle: Text(l10n.potaAutoSpotHint),
               secondary: const Icon(Icons.wifi_tethering),

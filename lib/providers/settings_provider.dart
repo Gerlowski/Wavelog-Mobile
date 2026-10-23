@@ -133,6 +133,12 @@ class SettingsNotifier extends StateNotifier<SettingsModel> {
     state = s;
   }
 
+  Future<void> setOpenAddQsoOnStart(bool value) async {
+    final s = state.copyWith(openAddQsoOnStart: value);
+    await _repo.saveSettings(s);
+    state = s;
+  }
+
   Future<void> setQsoSyncCheckIntervalMinutes(int value) async {
     final s = state.copyWith(qsoSyncCheckIntervalMinutes: value);
     await _repo.saveSettings(s);
@@ -163,6 +169,7 @@ class SettingsNotifier extends StateNotifier<SettingsModel> {
       locale: state.locale,
       spotRefreshSeconds: state.spotRefreshSeconds,
       allowInsecureSsl: state.allowInsecureSsl,
+      openAddQsoOnStart: state.openAddQsoOnStart,
     );
     await _repo.saveSettings(s);
     state = s;
@@ -177,6 +184,7 @@ class SettingsNotifier extends StateNotifier<SettingsModel> {
       offlineModeEnabled: state.offlineModeEnabled,
       locale: state.locale,
       spotRefreshSeconds: state.spotRefreshSeconds,
+      openAddQsoOnStart: state.openAddQsoOnStart,
     );
     await _repo.saveSettings(s);
     state = s;

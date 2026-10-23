@@ -2286,6 +2286,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncNothing => 'Senkronize edilecek bir şey yok';
 
   @override
+  String get openAddQsoOnStart => 'Start on Add QSO';
+
+  @override
+  String get openAddQsoOnStartHint =>
+      'Open the QSO form right after the app starts; Back leads to Home';
+
+  @override
   String get rigSection => 'Radio (CAT)';
 
   @override
