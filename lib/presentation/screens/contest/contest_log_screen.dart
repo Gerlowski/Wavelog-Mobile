@@ -7,10 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/band_mode_data.dart';
+import '../../../core/rig/cat_protocol.dart';
 import '../../../core/utils/adif_generator.dart';
 import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/utils/validators.dart';
 import '../../../data/models/callsign_lookup_model.dart';
 import '../../../data/models/contest_model.dart';
 import '../../../data/models/qso_model.dart';
@@ -18,7 +20,9 @@ import '../../../providers/connectivity_provider.dart';
 import '../../../providers/lookup_provider.dart';
 import '../../../providers/qso_provider.dart';
 import '../../../providers/remote_datasource_provider.dart';
+import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../widgets/rig/rig_link_button.dart';
 import '../qso/add_qso_screen.dart';
 
 // ── Logged QSO entry (in-memory recent list) ──────────────────────────────────
@@ -93,6 +97,9 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
   CallsignLookupModel? _lookupResult;
   String _currentCallsign = '';    // tracks callsign for tablet panel
   String _lastLookedUp = '';       // avoid re-lookup for same callsign
+  Timer? _lookupDebounce;          // automatic lookup while typing
+  // Bumped by every lookup; a reply for an older one is dropped.
+  int _lookupSeq = 0;
 
   ContestSession? _session;
 
@@ -112,6 +119,13 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
     final centerFreq = kBandCenterFreqMhz[_band];
     if (centerFreq != null) _freqCtrl.text = centerFreq.toStringAsFixed(3);
     _freqCtrl.addListener(_onFreqChanged);
+    // Follow the radio's dial while a CAT link is up; _onFreqChanged then
+    // picks the matching band.
+    final rigHz = ref.read(rigProvider).frequencyHz;
+    if (rigHz != null) _freqCtrl.text = formatRigFreqMhz(rigHz);
+    ref.listenManual<int?>(rigProvider.select((s) => s.frequencyHz), (_, hz) {
+      if (hz != null) _freqCtrl.text = formatRigFreqMhz(hz);
+    });
     _callsignFocus.addListener(_onCallsignFocusChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_session == null && _contestId.isEmpty) {
@@ -125,6 +139,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
   @override
   void dispose() {
     _freqDebounce?.cancel();
+    _lookupDebounce?.cancel();
     _freqCtrl.removeListener(_onFreqChanged);
     _freqCtrl.dispose();
     _callsignFocus.removeListener(_onCallsignFocusChange);
@@ -189,6 +204,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
   Future<void> _doLookup(String callsign) async {
     if (callsign.isEmpty) return;
     _lastLookedUp = callsign;
+    final seq = ++_lookupSeq;
     setState(() {
       _currentCallsign = callsign;
       _lookupLoading = true;
@@ -200,7 +216,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
       final result = await ref
           .read(wavelogRemoteDatasourceProvider)
           .lookupCallsign(callsign: callsign, band: _band, mode: _mode);
-      if (!mounted) return;
+      if (!mounted || seq != _lookupSeq) return;
       setState(() {
         _lookupLoading = false;
         _lookupDone = true;
@@ -208,7 +224,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
         _lookupResult = result;
       });
     } catch (_) {
-      if (mounted) {
+      if (mounted && seq == _lookupSeq) {
         setState(() {
           _lookupLoading = false;
           _lookupDone = true;
@@ -730,6 +746,17 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
                     return;
                   }
                   setState(() {});
+                  _lookupDebounce?.cancel();
+                  _lookupDebounce =
+                      Timer(const Duration(milliseconds: 600), () {
+                    if (!mounted) return;
+                    // Read the field, not [v]: the QSO may have been
+                    // logged and the form cleared since this keystroke.
+                    final cs = _callsignCtrl.text.trim().toUpperCase();
+                    if (cs != _lastLookedUp && isAutoLookupCallsign(cs)) {
+                      _doLookup(cs);
+                    }
+                  });
                 },
                 onSubmitted: (v) {
                   final band = matchBandCommand(v, kCommonBands);
@@ -769,6 +796,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
                       labelText: l10n.frequencyField,
                       hintText: '14.225',
                       suffixText: 'MHz',
+                      suffixIcon: const RigLinkButton(),
                       border: const OutlineInputBorder(),
                     ),
                   ),

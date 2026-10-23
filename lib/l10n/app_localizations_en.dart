@@ -2281,4 +2281,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncNothing => 'Nothing to sync';
+
+  @override
+  String get rigSection => 'Radio (CAT)';
+
+  @override
+  String get rigScreenTitle => 'Radio connection (CAT)';
+
+  @override
+  String get rigTileSubtitle =>
+      'Read the frequency live from a radio connected by USB cable';
+
+  @override
+  String get rigProtocolLabel => 'Protocol';
+
+  @override
+  String get rigProtocolIcom => 'Icom CI-V';
+
+  @override
+  String get rigProtocolXiegu => 'Xiegu G90 (CI-V)';
+
+  @override
+  String get rigProtocolKenwood => 'Kenwood / Elecraft / Yaesu (FA;)';
+
+  @override
+  String get rigProtocolYaesuLegacy => 'Yaesu FT-817/818/857/897';
+
+  @override
+  String get rigBaudLabel => 'Baud rate';
+
+  @override
+  String get rigCivAddressLabel => 'CI-V address';
+
+  @override
+  String get rigCivAddressHint =>
+      'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90';
+
+  @override
+  String get rigDevicesLabel => 'USB devices';
+
+  @override
+  String get rigNoDevices =>
+      'No USB serial device found. Connect the radio with a USB OTG cable.';
+
+  @override
+  String get rigRefresh => 'Refresh';
+
+  @override
+  String get rigConnect => 'Connect';
+
+  @override
+  String get rigDisconnect => 'Disconnect';
+
+  @override
+  String rigStatusConnected(String device) {
+    return 'Connected: $device';
+  }
+
+  @override
+  String get rigStatusConnecting => 'Connecting…';
+
+  @override
+  String get rigStatusDisconnected => 'Not connected';
+
+  @override
+  String get rigWaitingForData =>
+      'Waiting for the radio… Check the protocol, baud rate and CI-V address.';
+
+  @override
+  String get rigErrorPermission => 'USB permission denied';
+
+  @override
+  String get rigErrorDetached => 'Radio disconnected';
+
+  @override
+  String rigErrorConnection(String code) {
+    return 'Connection error ($code)';
+  }
 }
