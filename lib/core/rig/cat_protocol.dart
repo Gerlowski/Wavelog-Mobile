@@ -6,6 +6,10 @@ enum CatProtocol {
   /// Icom CI-V (IC-7300, IC-705, IC-7610, IC-9700, …).
   icomCiv,
 
+  /// Xiegu G90 (and other Xiegu radios): the Icom CI-V command set with its
+  /// own default address and speed.
+  xieguCiv,
+
   /// ASCII `FA;` command set shared by Kenwood, Elecraft and current Yaesu
   /// radios (FT-991/A, FT-710, FTDX10, FTDX101, FT-891, …).
   kenwood,
@@ -16,9 +20,17 @@ enum CatProtocol {
   /// Baud rate the radio ships with, used when the protocol is picked.
   int get defaultBaudRate => switch (this) {
         CatProtocol.icomCiv => 19200,
+        CatProtocol.xieguCiv => 19200,
         CatProtocol.kenwood => 38400,
         CatProtocol.yaesuLegacy => 4800,
       };
+
+  /// Whether the radio is addressed by a CI-V address.
+  bool get usesCiv =>
+      this == CatProtocol.icomCiv || this == CatProtocol.xieguCiv;
+
+  /// CI-V address the radio ships with (IC-7300 for Icom, G90 for Xiegu).
+  int get defaultCivAddress => this == CatProtocol.xieguCiv ? 0x88 : 0x94;
 }
 
 /// Encodes the frequency poll for one protocol and decodes frequencies from
@@ -26,7 +38,7 @@ enum CatProtocol {
 abstract class CatCodec {
   factory CatCodec(CatProtocol protocol, {int civAddress = 0x94}) =>
       switch (protocol) {
-        CatProtocol.icomCiv => IcomCivCodec(civAddress),
+        CatProtocol.icomCiv || CatProtocol.xieguCiv => IcomCivCodec(civAddress),
         CatProtocol.kenwood => KenwoodCodec(),
         CatProtocol.yaesuLegacy => YaesuLegacyCodec(),
       };

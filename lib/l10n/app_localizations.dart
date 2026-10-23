@@ -4450,6 +4450,12 @@ abstract class AppLocalizations {
   /// **'Icom CI-V'**
   String get rigProtocolIcom;
 
+  /// No description provided for @rigProtocolXiegu.
+  ///
+  /// In en, this message translates to:
+  /// **'Xiegu G90 (CI-V)'**
+  String get rigProtocolXiegu;
+
   /// No description provided for @rigProtocolKenwood.
   ///
   /// In en, this message translates to:
@@ -4477,7 +4483,7 @@ abstract class AppLocalizations {
   /// No description provided for @rigCivAddressHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, A2 IC-9700'**
+  /// **'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90'**
   String get rigCivAddressHint;
 
   /// No description provided for @rigDevicesLabel.

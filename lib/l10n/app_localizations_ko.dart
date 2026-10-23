@@ -2275,6 +2275,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get rigProtocolIcom => 'Icom CI-V';
 
   @override
+  String get rigProtocolXiegu => 'Xiegu G90 (CI-V)';
+
+  @override
   String get rigProtocolKenwood => 'Kenwood / Elecraft / Yaesu (FA;)';
 
   @override
@@ -2288,7 +2291,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get rigCivAddressHint =>
-      'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, A2 IC-9700';
+      'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90';
 
   @override
   String get rigDevicesLabel => 'USB devices';

@@ -50,6 +50,7 @@ class _RigScreenState extends ConsumerState<RigScreen> {
 
   String _protocolLabel(CatProtocol p) => switch (p) {
         CatProtocol.icomCiv => context.l10n.rigProtocolIcom,
+        CatProtocol.xieguCiv => context.l10n.rigProtocolXiegu,
         CatProtocol.kenwood => context.l10n.rigProtocolKenwood,
         CatProtocol.yaesuLegacy => context.l10n.rigProtocolYaesuLegacy,
       };
@@ -124,8 +125,11 @@ class _RigScreenState extends ConsumerState<RigScreen> {
             ],
             onChanged: (p) {
               if (p == null) return;
-              final baud = p.defaultBaudRate;
-              notifier.setConfig(config.copyWith(protocol: p, baudRate: baud));
+              notifier.setConfig(config.copyWith(
+                protocol: p,
+                baudRate: p.defaultBaudRate,
+                civAddress: p.defaultCivAddress,
+              ));
             },
           ),
           const SizedBox(height: 12),
@@ -142,7 +146,7 @@ class _RigScreenState extends ConsumerState<RigScreen> {
               if (b != null) notifier.setConfig(config.copyWith(baudRate: b));
             },
           ),
-          if (config.protocol == CatProtocol.icomCiv) ...[
+          if (config.protocol.usesCiv) ...[
             const SizedBox(height: 12),
             TextFormField(
               controller: _civCtrl,

@@ -197,7 +197,8 @@ class SettingsLocalDatasource {
     return RigConfig(
       protocol: protocol,
       baudRate: prefs.getInt('wl_rig_baud_rate') ?? protocol.defaultBaudRate,
-      civAddress: prefs.getInt('wl_rig_civ_address') ?? defaults.civAddress,
+      civAddress:
+          prefs.getInt('wl_rig_civ_address') ?? protocol.defaultCivAddress,
     );
   }
 

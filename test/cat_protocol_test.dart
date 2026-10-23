@@ -33,6 +33,19 @@ void main() {
       expect(codec.feed([0xFE, 0xFE, 0xE0, 0x98, 0x03, ...freq, 0xFD]), isEmpty);
     });
 
+    test('Xiegu G90: one-wire CI-V echo, then the reply from 0x88', () {
+      expect(CatProtocol.xieguCiv.defaultCivAddress, 0x88);
+      final codec = CatCodec(CatProtocol.xieguCiv,
+          civAddress: CatProtocol.xieguCiv.defaultCivAddress);
+      expect(codec.pollCommand, [0xFE, 0xFE, 0x88, 0xE0, 0x03, 0xFD]);
+      expect(
+          codec.feed([
+            0xFE, 0xFE, 0x88, 0xE0, 0x03, 0xFD, // our poll echoed back
+            0xFE, 0xFE, 0xE0, 0x88, 0x03, ...freq, 0xFD,
+          ]),
+          [14074000]);
+    });
+
     test('reassembles a frame split across reads, with leading noise', () {
       final codec = IcomCivCodec(0x94);
       expect(codec.feed([0x12, 0xFE]), isEmpty);
