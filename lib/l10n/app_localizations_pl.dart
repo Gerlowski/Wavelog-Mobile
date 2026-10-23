@@ -2365,4 +2365,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String rigErrorConnection(String code) {
     return 'Błąd połączenia ($code)';
   }
+
+  @override
+  String get workedNewCountry => 'Nowy kraj';
+
+  @override
+  String workedNewBand(String band) {
+    return 'Nowe pasmo ($band)';
+  }
+
+  @override
+  String workedNewMode(String mode) {
+    return 'Nowy tryb ($mode)';
+  }
+
+  @override
+  String workedDupe(String band, String mode) {
+    return 'Duplikat: dziś już było na $band $mode';
+  }
 }

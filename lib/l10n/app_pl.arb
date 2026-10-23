@@ -827,5 +827,9 @@
   "rigWaitingForData": "Czekam na radio… Sprawdź protokół, prędkość i adres CI-V.",
   "rigErrorPermission": "Brak zgody na dostęp do USB",
   "rigErrorDetached": "Radio odłączone",
-  "rigErrorConnection": "Błąd połączenia ({code})"
+  "rigErrorConnection": "Błąd połączenia ({code})",
+  "workedNewCountry": "Nowy kraj",
+  "workedNewBand": "Nowe pasmo ({band})",
+  "workedNewMode": "Nowy tryb ({mode})",
+  "workedDupe": "Duplikat: dziś już było na {band} {mode}"
 }

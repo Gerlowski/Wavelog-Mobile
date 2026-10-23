@@ -4557,6 +4557,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connection error ({code})'**
   String rigErrorConnection(String code);
+
+  /// No description provided for @workedNewCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'New country'**
+  String get workedNewCountry;
+
+  /// No description provided for @workedNewBand.
+  ///
+  /// In en, this message translates to:
+  /// **'New band ({band})'**
+  String workedNewBand(String band);
+
+  /// No description provided for @workedNewMode.
+  ///
+  /// In en, this message translates to:
+  /// **'New mode ({mode})'**
+  String workedNewMode(String mode);
+
+  /// No description provided for @workedDupe.
+  ///
+  /// In en, this message translates to:
+  /// **'Dupe: already worked today on {band} {mode}'**
+  String workedDupe(String band, String mode);
 }
 
 class _AppLocalizationsDelegate
