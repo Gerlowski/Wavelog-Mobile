@@ -199,6 +199,9 @@ class SettingsLocalDatasource {
       baudRate: prefs.getInt('wl_rig_baud_rate') ?? protocol.defaultBaudRate,
       civAddress:
           prefs.getInt('wl_rig_civ_address') ?? protocol.defaultCivAddress,
+      autoConnect: prefs.getBool('wl_rig_auto_connect') ?? defaults.autoConnect,
+      lastVendorId: prefs.getInt('wl_rig_last_vendor_id'),
+      lastProductId: prefs.getInt('wl_rig_last_product_id'),
     );
   }
 
@@ -207,5 +210,11 @@ class SettingsLocalDatasource {
     await prefs.setString('wl_rig_protocol', config.protocol.name);
     await prefs.setInt('wl_rig_baud_rate', config.baudRate);
     await prefs.setInt('wl_rig_civ_address', config.civAddress);
+    await prefs.setBool('wl_rig_auto_connect', config.autoConnect);
+    final vendorId = config.lastVendorId, productId = config.lastProductId;
+    if (vendorId != null && productId != null) {
+      await prefs.setInt('wl_rig_last_vendor_id', vendorId);
+      await prefs.setInt('wl_rig_last_product_id', productId);
+    }
   }
 }

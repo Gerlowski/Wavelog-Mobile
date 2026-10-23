@@ -1,6 +1,7 @@
 package com.wavelog_mobile
 
 import android.content.Intent
+import android.hardware.usb.UsbManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -110,6 +111,12 @@ class MainActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // Radio plugged in while the app runs (singleTop): connect to it.
+        // On a cold start the Dart side checks for it itself.
+        if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
+            rigSerial?.onDeviceAttached()
+            return
+        }
         if (handleViewIntent(intent)) {
             // Engine may not be ready yet — guard with null check
             intentChannel?.invokeMethod(

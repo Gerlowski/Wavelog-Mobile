@@ -43,6 +43,7 @@ class RigSerialPlugin(
     private var port: UsbSerialPort? = null
     private var ioManager: SerialInputOutputManager? = null
     private var events: EventChannel.EventSink? = null
+    private val channel = MethodChannel(messenger, "com.wavelog_mobile/rig_serial")
 
     private val detachReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
@@ -55,7 +56,7 @@ class RigSerialPlugin(
     }
 
     init {
-        MethodChannel(messenger, "com.wavelog_mobile/rig_serial").setMethodCallHandler(this)
+        channel.setMethodCallHandler(this)
         EventChannel(messenger, "com.wavelog_mobile/rig_serial/data").setStreamHandler(this)
     }
 
@@ -66,6 +67,9 @@ class RigSerialPlugin(
                     "deviceId" to d.device.deviceId,
                     "name" to (d.device.productName ?: d.device.deviceName),
                     "driver" to d.javaClass.simpleName.removeSuffix("SerialDriver"),
+                    "vendorId" to d.device.vendorId,
+                    "productId" to d.device.productId,
+                    "hasPermission" to usbManager.hasPermission(d.device),
                 )
             })
             "open" -> open(
@@ -112,6 +116,15 @@ class RigSerialPlugin(
                 events?.error("IO_ERROR", e.message, null)
             }
         }
+    }
+
+    /**
+     * A USB serial device was plugged in and Android handed it to the app
+     * through the manifest's device filter, with permission granted; the
+     * Dart side decides whether to connect (lib/providers/rig_provider.dart).
+     */
+    fun onDeviceAttached() {
+        channel.invokeMethod("deviceAttached", null)
     }
 
     fun close() {

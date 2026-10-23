@@ -2330,6 +2330,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90';
 
   @override
+  String get rigAutoConnect => 'Connect automatically';
+
+  @override
+  String get rigAutoConnectHint =>
+      'When the radio\'s USB cable is plugged in, or the app starts with it plugged in. Tick \"Always\" in Android\'s prompt to skip it next time.';
+
+  @override
   String get rigDevicesLabel => 'USB devices';
 
   @override

@@ -2325,6 +2325,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'np. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90';
 
   @override
+  String get rigAutoConnect => 'Łącz automatycznie';
+
+  @override
+  String get rigAutoConnectHint =>
+      'Po podłączeniu kabla USB radia albo przy starcie aplikacji z podłączonym radiem. Zaznacz „Zawsze” w pytaniu Androida, żeby nie pytał następnym razem.';
+
+  @override
   String get rigDevicesLabel => 'Urządzenia USB';
 
   @override

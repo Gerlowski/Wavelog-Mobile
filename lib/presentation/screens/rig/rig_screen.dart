@@ -99,6 +99,11 @@ class _RigScreenState extends ConsumerState<RigScreen> {
                               : null,
                         ),
                   ),
+                  if (rig.mode != null)
+                    Text(
+                      '${rig.mode!.appMode} ${rig.mode!.appSubmode ?? ''}'.trim(),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   if (rig.status == RigStatus.connected && hz == null) ...[
                     const SizedBox(height: 8),
                     Text(l10n.rigWaitingForData),
@@ -169,6 +174,15 @@ class _RigScreenState extends ConsumerState<RigScreen> {
             ),
           ],
           const SizedBox(height: 16),
+
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.rigAutoConnect),
+            subtitle: Text(l10n.rigAutoConnectHint),
+            value: config.autoConnect,
+            onChanged: notifier.setAutoConnect,
+          ),
+          const SizedBox(height: 8),
 
           // ── USB devices ─────────────────────────────────────────────
           Row(
