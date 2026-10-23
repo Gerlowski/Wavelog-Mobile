@@ -109,6 +109,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   // Tablet right-panel callsign — debounced to avoid per-keystroke API calls
   String _currentCallsign = '';
   Timer? _callsignPanelTimer;
+  // Bumped by every lookup; a reply for an older one is dropped, since
+  // lookups now start while the callsign is still being typed.
+  int _lookupSeq = 0;
   Timer? _freqSaveDebounce;
 
   @override
@@ -344,6 +347,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       setState(() => _currentCallsign = callsign);
     }
 
+    final seq = ++_lookupSeq;
     setState(() {
       _lookupLoading = true;
       _lookupSuccess = false;
@@ -353,7 +357,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       final remote = ref.read(wavelogRemoteDatasourceProvider);
       final result = await remote.lookupCallsign(
           callsign: callsign, band: _band, mode: _mode);
-      if (!mounted) return;
+      if (!mounted || seq != _lookupSeq) return;
       setState(() {
         _lookupLoading = false;
         _lookupDone = true;
@@ -365,7 +369,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         _dxccFlag = result.flag;
       });
     } catch (_) {
-      if (mounted) {
+      if (mounted && seq == _lookupSeq) {
         setState(() {
           _lookupLoading = false;
           _lookupDone = true;
@@ -1020,13 +1024,16 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
               }
             });
           }
-          // Debounced tablet panel refresh
+          // Debounced tablet panel refresh and automatic lookup once the
+          // operator pauses on a complete-looking callsign.
           _callsignPanelTimer?.cancel();
           _callsignPanelTimer = Timer(const Duration(milliseconds: 600), () {
+            if (!mounted) return;
             final cs2 = v.trim().toUpperCase();
-            if (mounted && cs2 != _currentCallsign) {
+            if (cs2 != _currentCallsign) {
               setState(() => _currentCallsign = cs2);
             }
+            if (!_lookupDone && isAutoLookupCallsign(cs2)) _doLookup();
           });
         },
         onFieldSubmitted: (v) {
