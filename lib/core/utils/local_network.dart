@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Marker attached to a DioException's `error` field when a request to a
@@ -63,15 +64,55 @@ bool _isLocalIPv6(List<int> b) {
   return false;
 }
 
+int? _androidSdkIntCache;
+
+/// Cached `Build.VERSION.SDK_INT`, null on non-Android platforms. Cached
+/// because [ensureLocalNetworkPermission] runs on every local-network
+/// request's hot path.
+///
+/// Only a *successful* lookup is cached — never a failure. An earlier
+/// version cached "checked" separately from the value, so a transient
+/// failure on the very first call (e.g. the platform channel not being
+/// fully up yet when an auto-sync fires its first request right at app
+/// launch) got locked in as a permanent null for the rest of the app
+/// session: every later request fell through to the broken pre-API-37
+/// permission_handler path this function exists to skip, and only
+/// recovered once something (e.g. opening Settings and testing the
+/// connection, which happens well after startup) happened to trigger
+/// a successful lookup. Reported live: the fix in this file resolved the
+/// local-network block, but it reappeared after a cold app restart until
+/// the user manually ran Test Connection. Retrying on every failure until
+/// one succeeds removes that trap.
+Future<int?> _androidSdkInt() async {
+  if (_androidSdkIntCache != null) return _androidSdkIntCache;
+  if (!Platform.isAndroid) return null;
+  try {
+    final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    _androidSdkIntCache = sdkInt;
+    return sdkInt;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Ensures [Permission.accessLocalNetwork] is granted, requesting it if
 /// needed. Fails open (returns true) on any unexpected plugin/platform
 /// error, so a hiccup in the permission check can't make connectivity any
-/// worse than the silent block this is fixing in the first place. On
-/// Android versions below 17 (API 37) where this permission doesn't apply,
-/// permission_handler's own status check already resolves as granted, no
-/// separate SDK-version check is done here.
+/// worse than the silent block this is fixing in the first place.
+///
+/// `ACCESS_LOCAL_NETWORK` only exists starting Android 17 (API 37); on
+/// older OS versions declaring/checking it is documented as a no-op. In
+/// practice `permission_handler`'s status check doesn't reliably mirror
+/// that "no-op" on every OEM build, it can resolve as permanently denied
+/// instead, which broke local network access entirely on a real Android 13
+/// device (regression reported after this permission check first shipped).
+/// Skip the check below API 37 rather than trust the plugin there.
 Future<bool> ensureLocalNetworkPermission() async {
   try {
+    if (Platform.isAndroid) {
+      final sdkInt = await _androidSdkInt();
+      if (sdkInt != null && sdkInt < 37) return true;
+    }
     var status = await Permission.accessLocalNetwork.status;
     if (!status.isGranted) {
       status = await Permission.accessLocalNetwork.request();

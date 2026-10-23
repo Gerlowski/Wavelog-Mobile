@@ -66,6 +66,7 @@ app.*.map.json
 
 # Tool output
 graphify-out/
+graphify-critical-notes/
 brag-output/
 brag-output-*/
 
