@@ -15,6 +15,7 @@ import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/worked_before.dart';
 import '../../../data/models/callsign_lookup_model.dart';
 import '../../../data/models/qso_model.dart';
 import '../../../data/models/station_model.dart';
@@ -101,6 +102,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
 
   String? _dxccCountry;
   String? _dxccFlag;
+  String? _dxccId; // DXCC entity id from the lookup, for _WorkedBeforeBadges
 
   // Auto-spot banner
   AutoSpotStatus? _autoSpotStatus;
@@ -384,6 +386,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         if (result.gridSquare != null) _gridCtrl.text = result.gridSquare!;
         _dxccCountry = result.country;
         _dxccFlag = result.flag;
+        _dxccId = result.dxcc;
       });
     } catch (_) {
       if (mounted && seq == _lookupSeq) {
@@ -580,6 +583,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       _lookupSuccess = false;
       _dxccCountry = null;
       _dxccFlag = null;
+      _dxccId = null;
       if (_isLive) _dateTimeOn = DateTime.now().toUtc();
     });
     // Rapid re-entry for pile-ups / hardware keyboard use (issue #48): snap
@@ -1054,6 +1058,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                 _gridCtrl.clear();
                 _dxccCountry = null;
                 _dxccFlag = null;
+                _dxccId = null;
                 _lookupSuccess = false;
               }
             });
@@ -1119,6 +1124,17 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         }).toList(),
       ),
       const SizedBox(height: 8),
+
+      // ── New country / band / mode, dupe ─────────────────────────────
+      if (widget.editQso == null && _currentCallsign.length >= 3)
+        _WorkedBeforeBadges(
+          callsign: _currentCallsign,
+          band: _band,
+          mode: _mode,
+          day: _dateTimeOn,
+          dxccId: _dxccId,
+          country: _dxccCountry,
+        ),
 
       // ── Logbook özeti: bugün sayacı + son 5 QSO ────────────────────
       if (!Responsive.useTabletLayout(context))
@@ -2296,6 +2312,72 @@ class _HistoryBadge extends StatelessWidget {
 }
 
 // ── Inline previous QSOs (phone layout only) ──────────────────────────────────
+
+/// Chips under the callsign: a new DXCC entity, a new band or mode for it,
+/// or a dupe (same call, band and mode already logged today), checked
+/// against the QSOs in scope (see worked_before.dart).
+class _WorkedBeforeBadges extends ConsumerWidget {
+  final String callsign;
+  final String band;
+  final String mode;
+  final DateTime day;
+  final String? dxccId;
+  final String? country;
+
+  const _WorkedBeforeBadges({
+    required this.callsign,
+    required this.band,
+    required this.mode,
+    required this.day,
+    this.dxccId,
+    this.country,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final log = ref.watch(scopedQsoProvider).valueOrNull;
+    if (log == null) return const SizedBox.shrink();
+    final s = workedStatus(
+      log: log,
+      callsign: callsign,
+      band: band,
+      mode: mode,
+      day: day,
+      dxccId: dxccId,
+      country: country,
+    );
+    if (s.isEmpty) return const SizedBox.shrink();
+
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    Widget chip(IconData icon, String label, Color bg, Color fg) => Chip(
+          avatar: Icon(icon, size: 16, color: fg),
+          label: Text(label,
+              style: TextStyle(color: fg, fontWeight: FontWeight.w600)),
+          backgroundColor: bg,
+          side: BorderSide.none,
+          visualDensity: VisualDensity.compact,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(spacing: 6, runSpacing: 6, children: [
+        if (s.dupe)
+          chip(Icons.warning_amber_rounded, l10n.workedDupe(band, mode),
+              Colors.orange.shade700, Colors.white),
+        if (s.newCountry)
+          chip(Icons.public, l10n.workedNewCountry, Colors.green.shade700,
+              Colors.white),
+        if (s.newBand)
+          chip(Icons.waves, l10n.workedNewBand(band), cs.primaryContainer,
+              cs.onPrimaryContainer),
+        if (s.newMode)
+          chip(Icons.tune, l10n.workedNewMode(mode), cs.primaryContainer,
+              cs.onPrimaryContainer),
+      ]),
+    );
+  }
+}
 
 class _InlinePreviousQsos extends ConsumerWidget {
   final String callsign;
