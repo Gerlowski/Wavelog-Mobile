@@ -226,8 +226,20 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             _loadLastBand();
             _loadLastFreq();
           }
-          final rigMode = ref.read(rigProvider).mode;
-          if (rigMode != null) _applyRigMode(rigMode);
+        }
+        final rigMode = ref.read(rigProvider).mode;
+        if (widget.prefillMode == null && rigMode != null) {
+          _applyRigMode(rigMode);
+        }
+        // Spot tap: tune the radio to the spot, so the radio and the form
+        // agree (the rig listeners above then just confirm it).
+        final spotHz = widget.prefillFrequencyMhz == null
+            ? null
+            : double.tryParse(widget.prefillFrequencyMhz!);
+        if (spotHz != null) {
+          final hz = (spotHz * 1e6).round();
+          ref.read(rigProvider.notifier).tune(hz,
+              mode: RigMode.forLogMode(widget.prefillMode ?? '', hz));
         }
         _loadLastSubmode(_band, _mode);
       }

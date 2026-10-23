@@ -114,6 +114,10 @@ class RigNotifier extends StateNotifier<RigState> {
     _pollTimer = Timer.periodic(_pollInterval, (_) => _poll());
   }
 
+  /// Tunes the radio to [hz] and, when given, [mode] — no-op while not
+  /// connected. Goes out on the next poll tick, ahead of the next query.
+  void tune(int hz, {RigMode? mode}) => _codec?.tune(hz, mode);
+
   Future<void> disconnect() async {
     _stop();
     state = RigState(config: state.config);

@@ -56,6 +56,17 @@ enum RigMode {
   bool appliesTo(String current) =>
       appMode != 'SSB' ||
       const {'SSB', 'CW', 'AM', 'FM', 'RTTY'}.contains(current);
+
+  /// The radio mode to tune to for a log [mode] at [hz] (e.g. a spot), or
+  /// null to leave the radio's mode alone: digital modes run in whatever
+  /// USB / DATA setup the operator's radio already has.
+  static RigMode? forLogMode(String mode, int hz) => switch (mode) {
+        'SSB' => hz < 10000000 ? RigMode.lsb : RigMode.usb,
+        'CW' => RigMode.cw,
+        'AM' => RigMode.am,
+        'FM' => RigMode.fm,
+        _ => null,
+      };
 }
 
 /// One value decoded from the radio: a frequency in Hz or a mode.
@@ -79,8 +90,12 @@ abstract class CatCodec {
         CatProtocol.yaesuLegacy => YaesuLegacyCodec(),
       };
 
-  /// Bytes to send for the next poll; called on every poll tick.
+  /// Bytes to send for the next poll; called on every poll tick. Commands
+  /// queued by [tune] go out first.
   Uint8List nextPoll();
+
+  /// Queues setting the radio to [hz] and, when given, [mode].
+  void tune(int hz, RigMode? mode);
 
   /// Buffers [data] and returns every value decoded from the frames that
   /// are now complete.
@@ -100,6 +115,9 @@ class IcomCivCodec implements CatCodec {
   static const _cmdTransceiveMode = 0x01;
   static const _cmdReadFreq = 0x03;
   static const _cmdReadMode = 0x04;
+  static const _cmdSetFreq = 0x05;
+  static const _cmdSetMode = 0x06;
+  static const _filter1 = 0x01;
 
   static const _modes = {
     0x00: RigMode.lsb,
@@ -115,6 +133,7 @@ class IcomCivCodec implements CatCodec {
 
   final int radioAddress;
   final _buf = <int>[];
+  final _pending = <List<int>>[];
   var _askedFreq = false;
 
   IcomCivCodec(this.radioAddress);
@@ -123,11 +142,29 @@ class IcomCivCodec implements CatCodec {
   // command sent right behind the first would collide with its reply.
   @override
   Uint8List nextPoll() {
+    if (_pending.isNotEmpty) return _frame(_pending.removeAt(0));
     _askedFreq = !_askedFreq;
-    final cmd = _askedFreq ? _cmdReadFreq : _cmdReadMode;
-    return Uint8List.fromList(
-        [_preamble, _preamble, radioAddress, _controller, cmd, _end]);
+    return _frame([_askedFreq ? _cmdReadFreq : _cmdReadMode]);
   }
+
+  @override
+  void tune(int hz, RigMode? mode) {
+    _pending
+      ..clear()
+      ..add([_cmdSetFreq, ..._bcdLittleEndianBytes(hz, 5)]);
+    final code = _modes.entries.firstWhere((e) => e.value == mode,
+        orElse: () => const MapEntry(-1, RigMode.lsb)).key;
+    // Mode plus filter byte: the G90 (and Hamlib for it) expects both.
+    if (code >= 0) _pending.add([_cmdSetMode, code, _filter1]);
+  }
+
+  Uint8List _frame(List<int> body) => Uint8List.fromList(
+      [_preamble, _preamble, radioAddress, _controller, ...body, _end]);
+
+  static List<int> _bcdLittleEndianBytes(int value, int length) => [
+        for (var i = 0, v = value; i < length; i++, v ~/= 100)
+          ((v % 100) ~/ 10) << 4 | v % 10,
+      ];
 
   @override
   List<CatUpdate> feed(List<int> data) {
@@ -228,13 +265,39 @@ class KenwoodCodec implements CatCodec {
 
   final _buf = StringBuffer();
   bool? _isYaesu;
+  int? _tuneHz;
+  RigMode? _tuneMode;
+
+  // Set commands need the dialect too (digit count, mode prefix), so a
+  // tune queued before the first FA reply waits for it.
+  @override
+  Uint8List nextPoll() {
+    final isYaesu = _isYaesu;
+    if (isYaesu == null) return Uint8List.fromList(ascii.encode('FA;'));
+    final out = StringBuffer();
+    final hz = _tuneHz;
+    if (hz != null) {
+      out.write('FA${hz.toString().padLeft(isYaesu ? 9 : 11, '0')};');
+      final mode = _tuneMode;
+      final code = mode == null
+          ? null
+          : (isYaesu ? _yaesuModes : _kenwoodModes)
+              .entries
+              .firstWhere((e) => e.value == mode)
+              .key;
+      if (code != null) out.write(isYaesu ? 'MD0$code;' : 'MD$code;');
+      _tuneHz = null;
+      _tuneMode = null;
+    }
+    out.write(isYaesu ? 'FA;MD0;' : 'FA;MD;');
+    return Uint8List.fromList(ascii.encode(out.toString()));
+  }
 
   @override
-  Uint8List nextPoll() => Uint8List.fromList(ascii.encode(switch (_isYaesu) {
-        null => 'FA;',
-        true => 'FA;MD0;',
-        false => 'FA;MD;',
-      }));
+  void tune(int hz, RigMode? mode) {
+    _tuneHz = hz;
+    _tuneMode = mode;
+  }
 
   @override
   List<CatUpdate> feed(List<int> data) {
@@ -283,12 +346,36 @@ class YaesuLegacyCodec implements CatCodec {
     0x08: RigMode.fm,
     0x88: RigMode.fm, // FM-N
   };
+  static const _setModeCodes = {
+    RigMode.lsb: 0x00,
+    RigMode.usb: 0x01,
+    RigMode.cw: 0x02,
+    RigMode.am: 0x04,
+    RigMode.fm: 0x08,
+  };
   final _buf = <int>[];
+  final _pending = <List<int>>[];
 
+  // Set commands get no reply, so each takes a poll tick of its own.
   @override
   Uint8List nextPoll() {
     _buf.clear();
+    if (_pending.isNotEmpty) return Uint8List.fromList(_pending.removeAt(0));
     return Uint8List.fromList([0, 0, 0, 0, 0x03]);
+  }
+
+  @override
+  void tune(int hz, RigMode? mode) {
+    final tens = (hz ~/ 10).toString().padLeft(8, '0');
+    _pending
+      ..clear()
+      ..add([
+        for (var i = 0; i < 8; i += 2)
+          int.parse(tens[i]) << 4 | int.parse(tens[i + 1]),
+        0x01, // set frequency
+      ]);
+    final code = _setModeCodes[mode];
+    if (code != null) _pending.add([code, 0, 0, 0, 0x07]); // set mode
   }
 
   @override
