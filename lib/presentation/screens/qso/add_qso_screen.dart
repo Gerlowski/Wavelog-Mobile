@@ -87,6 +87,8 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   // the operator actually has to type per contact, the closest equivalent
   // this screen has to a contest logger's "exchange" field.
   late FocusNode _rstRcvdFocus;
+  final _freqFocus = FocusNode();
+  final _rstSentFocus = FocusNode();
 
   DateTime _dateTimeOn = DateTime.now().toUtc();
   String _band = '20m';
@@ -275,6 +277,8 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _callsignFocus.removeListener(_onCallsignFocusChange);
     _callsignFocus.dispose();
     _rstRcvdFocus.dispose();
+    _freqFocus.dispose();
+    _rstSentFocus.dispose();
     _callsignCtrl.dispose();
     _freqCtrl.dispose();
     _rstSentCtrl.dispose();
@@ -575,6 +579,15 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   // contest_log_screen.dart does) would be disproportionate here.
   void _submitIfCallsignFocused() {
     if (_callsignFocus.hasFocus) _submit();
+  }
+
+  /// Moves to the next field of the on-screen keyboard Enter chain with its
+  /// text selected, so typing replaces a default like "59" and Enter
+  /// accepts it as it is.
+  void _focusAndSelect(FocusNode node, TextEditingController ctrl) {
+    node.requestFocus();
+    ctrl.selection =
+        TextSelection(baseOffset: 0, extentOffset: ctrl.text.length);
   }
 
   Future<void> _submit() async {
@@ -999,6 +1012,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                     ),
         ),
         textCapitalization: TextCapitalization.characters,
+        textInputAction: TextInputAction.next,
         validator: validateCallsign,
         onChanged: (v) {
           if (v.endsWith(' ')) {
@@ -1055,8 +1069,15 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             _callsignCtrl.clear();
             return;
           }
-          _lookupDone = false;
-          _doLookup();
+          if (v.trim().isEmpty) return;
+          if (!_lookupDone) _doLookup();
+          // On-screen keyboard Enter walks callsign -> report -> save (the
+          // frequency first while it is empty), see _focusAndSelect.
+          if (_freqCtrl.text.trim().isEmpty) {
+            _focusAndSelect(_freqFocus, _freqCtrl);
+          } else {
+            _focusAndSelect(_rstSentFocus, _rstSentCtrl);
+          }
         },
       ),
 
@@ -1171,7 +1192,10 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
           prefixIcon: const Icon(Icons.waves),
           suffixIcon: const RigLinkButton(),
         ),
+        focusNode: _freqFocus,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) => _focusAndSelect(_rstSentFocus, _rstSentCtrl),
         validator: validateFrequency,
       ),
       const SizedBox(height: 12),
@@ -1181,8 +1205,12 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         Expanded(
           child: TextFormField(
             controller: _rstSentCtrl,
+            focusNode: _rstSentFocus,
             decoration: InputDecoration(labelText: l10n.rstSentField),
             keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) =>
+                _focusAndSelect(_rstRcvdFocus, _rstRcvdCtrl),
             validator: (v) => validateRst(v, _mode),
           ),
         ),
@@ -1193,6 +1221,8 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             focusNode: _rstRcvdFocus,
             decoration: InputDecoration(labelText: l10n.rstRcvdField),
             keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _submit(),
             validator: (v) => validateRst(v, _mode),
           ),
         ),
