@@ -15,6 +15,7 @@ import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/worked_before.dart';
 import '../../../data/models/callsign_lookup_model.dart';
 import '../../../data/models/qso_model.dart';
 import '../../../data/models/station_model.dart';
@@ -28,6 +29,7 @@ import '../../../providers/remote_datasource_provider.dart';
 import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_provider.dart';
+import '../../../providers/worked_before_provider.dart';
 import '../../widgets/rig/rig_link_button.dart';
 
 class AddQsoScreen extends ConsumerStatefulWidget {
@@ -103,6 +105,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
 
   String? _dxccCountry;
   String? _dxccFlag;
+  String? _dxccId; // DXCC entity id from the lookup, for _WorkedBeforeBadges
 
   // Auto-spot banner
   AutoSpotStatus? _autoSpotStatus;
@@ -203,6 +206,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
           (_, hz) {
         if (hz != null) _freqCtrl.text = formatRigFreqMhz(hz);
       });
+      ref.listenManual<RigMode?>(rigProvider.select((s) => s.mode), (_, m) {
+        if (m != null) _applyRigMode(m);
+      });
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -225,6 +231,20 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             _loadLastBand();
             _loadLastFreq();
           }
+        }
+        final rigMode = ref.read(rigProvider).mode;
+        if (widget.prefillMode == null && rigMode != null) {
+          _applyRigMode(rigMode);
+        }
+        // Spot tap: tune the radio to the spot, so the radio and the form
+        // agree (the rig listeners above then just confirm it).
+        final spotHz = widget.prefillFrequencyMhz == null
+            ? null
+            : double.tryParse(widget.prefillFrequencyMhz!);
+        if (spotHz != null) {
+          final hz = (spotHz * 1e6).round();
+          ref.read(rigProvider.notifier).tune(hz,
+              mode: RigMode.forLogMode(widget.prefillMode ?? '', hz));
         }
         _loadLastSubmode(_band, _mode);
       }
@@ -371,6 +391,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         if (result.gridSquare != null) _gridCtrl.text = result.gridSquare!;
         _dxccCountry = result.country;
         _dxccFlag = result.flag;
+        _dxccId = result.dxcc;
       });
     } catch (_) {
       if (mounted && seq == _lookupSeq) {
@@ -412,10 +433,27 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final ds = ref.read(settingsLocalDatasourceProvider);
     final saved = await ds.getLastSubmode(band, mode);
     if (!mounted) return;
+    // The sideband the radio is actually on beats any remembered one.
+    final rigMode = widget.editQso == null ? ref.read(rigProvider).mode : null;
+    if (rigMode != null && rigMode.appMode == mode && rigMode.appSubmode != null) {
+      setState(() => _submode = rigMode.appSubmode);
+      return;
+    }
     final resolved = (saved != null && (kSubmodes[mode]?.contains(saved) ?? false))
         ? saved
         : defaultSubmodeFor(band, mode);
     if (resolved != null) setState(() => _submode = resolved);
+  }
+
+  /// Follows the radio's mode (CAT link, see rig_provider.dart) unless the
+  /// log is on a digital mode the radio runs in USB/LSB.
+  void _applyRigMode(RigMode m) {
+    if (!m.appliesTo(_mode)) return;
+    if (m.appMode != _mode) {
+      _onModeChanged(m.appMode);
+    } else if (m.appSubmode != null && m.appSubmode != _submode) {
+      setState(() => _submode = m.appSubmode);
+    }
   }
 
   void _onModeChanged(String mode) {
@@ -550,6 +588,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       _lookupSuccess = false;
       _dxccCountry = null;
       _dxccFlag = null;
+      _dxccId = null;
       if (_isLive) _dateTimeOn = DateTime.now().toUtc();
     });
     // Rapid re-entry for pile-ups / hardware keyboard use (issue #48): snap
@@ -871,7 +910,11 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final form = Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        // Keep the Save button above the system navigation bar: Android 15+
+        // draws apps edge-to-edge, and a ListView with its own padding does
+        // not add the bottom inset by itself.
+        padding: EdgeInsets.fromLTRB(
+            16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
         children: _buildFormContent(context),
       ),
     );
@@ -1034,6 +1077,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                 _gridCtrl.clear();
                 _dxccCountry = null;
                 _dxccFlag = null;
+                _dxccId = null;
                 _lookupSuccess = false;
               }
             });
@@ -1106,6 +1150,16 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         }).toList(),
       ),
       const SizedBox(height: 8),
+
+      // ── New country / band / mode, dupe ─────────────────────────────
+      if (widget.editQso == null && _currentCallsign.length >= 3)
+        _WorkedBeforeBadges(
+          callsign: _currentCallsign,
+          band: _band,
+          mode: _mode,
+          day: _dateTimeOn,
+          dxccId: _dxccId,
+        ),
 
       // ── Logbook özeti: bugün sayacı + son 5 QSO ────────────────────
       if (!Responsive.useTabletLayout(context))
@@ -1691,7 +1745,8 @@ class _TabletInfoPanel extends ConsumerWidget {
 
     if (callsign.length < 3) {
       return ListView(
-        padding: const EdgeInsets.fromLTRB(12, 16, 16, 16),
+        padding: EdgeInsets.fromLTRB(
+            12, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
         children: [
           // ── Placeholder ──────────────────────────────────────────
           Padding(
@@ -1726,7 +1781,8 @@ class _TabletInfoPanel extends ConsumerWidget {
     final previousAsync = ref.watch(previousQsosByCallsignProvider(callsign));
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 16, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+          12, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
       children: [
         // ── Callsign header ──────────────────────────────────────────
         Row(children: [
@@ -2292,6 +2348,71 @@ class _HistoryBadge extends StatelessWidget {
 }
 
 // ── Inline previous QSOs (phone layout only) ──────────────────────────────────
+
+/// Chips under the callsign: a new DXCC entity, a new band or mode for it,
+/// or a dupe (same call, band and mode already logged today), checked
+/// against the QSOs in scope (see worked_before.dart).
+class _WorkedBeforeBadges extends ConsumerWidget {
+  final String callsign;
+  final String band;
+  final String mode;
+  final DateTime day;
+  final String? dxccId;
+
+  const _WorkedBeforeBadges({
+    required this.callsign,
+    required this.band,
+    required this.mode,
+    required this.day,
+    this.dxccId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final log = ref.watch(scopedQsoProvider).valueOrNull;
+    if (log == null) return const SizedBox.shrink();
+    final matcher = ref.watch(dxccMatcherProvider).valueOrNull;
+    final s = workedStatus(
+      log: log,
+      index: ref.watch(workedIndexProvider).valueOrNull,
+      callsign: callsign,
+      entity: dxccEntityOf(callsign, dxccId, matcher),
+      band: band,
+      mode: mode,
+      day: day,
+    );
+    if (s.isEmpty) return const SizedBox.shrink();
+
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    Widget chip(IconData icon, String label, Color bg, Color fg) => Chip(
+          avatar: Icon(icon, size: 16, color: fg),
+          label: Text(label,
+              style: TextStyle(color: fg, fontWeight: FontWeight.w600)),
+          backgroundColor: bg,
+          side: BorderSide.none,
+          visualDensity: VisualDensity.compact,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(spacing: 6, runSpacing: 6, children: [
+        if (s.dupe)
+          chip(Icons.warning_amber_rounded, l10n.workedDupe(band, mode),
+              Colors.orange.shade700, Colors.white),
+        if (s.newCountry)
+          chip(Icons.public, l10n.workedNewCountry, Colors.green.shade700,
+              Colors.white),
+        if (s.newBand)
+          chip(Icons.waves, l10n.workedNewBand(band), cs.primaryContainer,
+              cs.onPrimaryContainer),
+        if (s.newMode)
+          chip(Icons.tune, l10n.workedNewMode(mode), cs.primaryContainer,
+              cs.onPrimaryContainer),
+      ]),
+    );
+  }
+}
 
 class _InlinePreviousQsos extends ConsumerWidget {
   final String callsign;

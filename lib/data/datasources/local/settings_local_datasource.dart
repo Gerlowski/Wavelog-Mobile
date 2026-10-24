@@ -29,6 +29,7 @@ class SettingsLocalDatasource {
   static const _keyAllowInsecureSsl      = 'wl_allow_insecure_ssl';
   static const _keySpotRefreshSeconds    = 'wl_spot_refresh_seconds';
   static const _keyQsoSyncCheckInterval  = 'wl_qso_sync_check_interval_minutes';
+  static const _keyOpenAddQsoOnStart     = 'wl_open_add_qso_on_start';
 
   Future<SettingsModel> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -74,6 +75,7 @@ class SettingsLocalDatasource {
       spotRefreshSeconds:     prefs.getInt(_keySpotRefreshSeconds) ?? 0,
       qsoSyncCheckIntervalMinutes:
           prefs.getInt(_keyQsoSyncCheckInterval) ?? 30,
+      openAddQsoOnStart:      prefs.getBool(_keyOpenAddQsoOnStart) ?? false,
     );
   }
 
@@ -121,6 +123,7 @@ class SettingsLocalDatasource {
     await prefs.setInt(_keySpotRefreshSeconds, settings.spotRefreshSeconds);
     await prefs.setInt(
         _keyQsoSyncCheckInterval, settings.qsoSyncCheckIntervalMinutes);
+    await prefs.setBool(_keyOpenAddQsoOnStart, settings.openAddQsoOnStart);
     if (settings.locale != null) {
       await prefs.setString(_keyLocale, settings.locale!);
     } else {
@@ -199,6 +202,9 @@ class SettingsLocalDatasource {
       baudRate: prefs.getInt('wl_rig_baud_rate') ?? protocol.defaultBaudRate,
       civAddress:
           prefs.getInt('wl_rig_civ_address') ?? protocol.defaultCivAddress,
+      autoConnect: prefs.getBool('wl_rig_auto_connect') ?? defaults.autoConnect,
+      lastVendorId: prefs.getInt('wl_rig_last_vendor_id'),
+      lastProductId: prefs.getInt('wl_rig_last_product_id'),
     );
   }
 
@@ -207,5 +213,11 @@ class SettingsLocalDatasource {
     await prefs.setString('wl_rig_protocol', config.protocol.name);
     await prefs.setInt('wl_rig_baud_rate', config.baudRate);
     await prefs.setInt('wl_rig_civ_address', config.civAddress);
+    await prefs.setBool('wl_rig_auto_connect', config.autoConnect);
+    final vendorId = config.lastVendorId, productId = config.lastProductId;
+    if (vendorId != null && productId != null) {
+      await prefs.setInt('wl_rig_last_vendor_id', vendorId);
+      await prefs.setInt('wl_rig_last_product_id', productId);
+    }
   }
 }

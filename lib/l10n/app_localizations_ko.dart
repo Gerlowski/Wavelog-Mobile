@@ -2259,6 +2259,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get syncNothing => '동기화할 항목이 없습니다';
 
   @override
+  String get openAddQsoOnStart => 'Start on Add QSO';
+
+  @override
+  String get openAddQsoOnStartHint =>
+      'Open the QSO form right after the app starts; Back leads to Home';
+
+  @override
   String get rigSection => 'Radio (CAT)';
 
   @override
@@ -2292,6 +2299,13 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get rigCivAddressHint =>
       'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90';
+
+  @override
+  String get rigAutoConnect => 'Connect automatically';
+
+  @override
+  String get rigAutoConnectHint =>
+      'When the radio\'s USB cable is plugged in, or the app starts with it plugged in. Tick \"Always\" in Android\'s prompt to skip it next time.';
 
   @override
   String get rigDevicesLabel => 'USB devices';
@@ -2333,5 +2347,23 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String rigErrorConnection(String code) {
     return 'Connection error ($code)';
+  }
+
+  @override
+  String get workedNewCountry => 'New country';
+
+  @override
+  String workedNewBand(String band) {
+    return 'New band ($band)';
+  }
+
+  @override
+  String workedNewMode(String mode) {
+    return 'New mode ($mode)';
+  }
+
+  @override
+  String workedDupe(String band, String mode) {
+    return 'Dupe: already worked today on $band $mode';
   }
 }

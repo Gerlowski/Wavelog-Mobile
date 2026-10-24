@@ -2290,6 +2290,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get syncNothing => 'Nie ma nic do synchronizacji';
 
   @override
+  String get openAddQsoOnStart => 'Start od dodawania QSO';
+
+  @override
+  String get openAddQsoOnStartHint =>
+      'Po uruchomieniu aplikacji od razu otwiera formularz QSO; Wstecz prowadzi do ekranu głównego';
+
+  @override
   String get rigSection => 'Radio (CAT)';
 
   @override
@@ -2323,6 +2330,13 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get rigCivAddressHint =>
       'np. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90';
+
+  @override
+  String get rigAutoConnect => 'Łącz automatycznie';
+
+  @override
+  String get rigAutoConnectHint =>
+      'Po podłączeniu kabla USB radia albo przy starcie aplikacji z podłączonym radiem. Zaznacz „Zawsze” w pytaniu Androida, żeby nie pytał następnym razem.';
 
   @override
   String get rigDevicesLabel => 'Urządzenia USB';
@@ -2364,5 +2378,23 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String rigErrorConnection(String code) {
     return 'Błąd połączenia ($code)';
+  }
+
+  @override
+  String get workedNewCountry => 'Nowy kraj';
+
+  @override
+  String workedNewBand(String band) {
+    return 'Nowe pasmo ($band)';
+  }
+
+  @override
+  String workedNewMode(String mode) {
+    return 'Nowy tryb ($mode)';
+  }
+
+  @override
+  String workedDupe(String band, String mode) {
+    return 'Duplikat: dziś już było na $band $mode';
   }
 }
