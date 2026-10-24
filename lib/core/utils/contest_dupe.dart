@@ -17,16 +17,32 @@ class ContestWorked {
 /// the same contest ID.
 const kContestWindowWithoutSession = Duration(hours: 48);
 
+/// The exchange fields the v2 QSO list does return, unlike CONTEST_ID.
+const _exchangeFields = ['SRX', 'STX', 'SRX_STRING', 'STX_STRING'];
+
+/// Whether [q] belongs to contest [id] (upper-case). The v2 QSO list leaves
+/// out CONTEST_ID, so a QSO refreshed from the server has none: such a QSO
+/// counts when it carries a contest exchange and, given [stationId], was
+/// logged from that station.
+bool _inContest(QsoModel q, String id, int? stationId) {
+  final qid = q.contestId?.trim().toUpperCase() ?? '';
+  if (qid.isNotEmpty) return qid == id;
+  if (stationId != null && q.stationProfileId != stationId) return false;
+  final raw = q.rawAdif ?? const {};
+  return _exchangeFields.any((f) => (raw[f] ?? '').trim().isNotEmpty);
+}
+
 /// Checks [callsign] on [band] against the QSOs of contest [contestId]
-/// logged from [from] on. One QSO per band is the common contest rule, so
-/// the same call on the same band is a dupe; other bands are listed.
-/// Calls compare without case.
+/// logged from [from] on, from [stationId] when given. One QSO per band is
+/// the common contest rule, so the same call on the same band is a dupe;
+/// other bands are listed. Calls compare without case.
 ContestWorked contestWorked({
   required Iterable<QsoModel> log,
   required String callsign,
   required String band,
   required String contestId,
   required DateTime from,
+  int? stationId,
 }) {
   final call = callsign.trim().toUpperCase();
   final id = contestId.trim().toUpperCase();
@@ -38,7 +54,7 @@ ContestWorked contestWorked({
   final other = <String>{};
   for (final q in log) {
     if (q.callsign.trim().toUpperCase() != call) continue;
-    if (q.contestId?.trim().toUpperCase() != id) continue;
+    if (!_inContest(q, id, stationId)) continue;
     if (q.dateTimeOn.toUtc().isBefore(start)) continue;
     if (q.band.toLowerCase() == b) {
       if (dupe == null || q.dateTimeOn.isAfter(dupe.dateTimeOn)) dupe = q;

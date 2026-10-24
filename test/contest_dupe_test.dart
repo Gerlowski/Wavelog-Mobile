@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wavelog_mobile/core/utils/contest_dupe.dart';
 import 'package:wavelog_mobile/data/models/qso_model.dart';
 
-QsoModel qso(String call, String band, DateTime at, {String? contest}) =>
+QsoModel qso(String call, String band, DateTime at,
+        {String? contest, Map<String, String> raw = const {}, int station = 1}) =>
     QsoModel(
       callsign: call,
       dateTimeOn: at,
@@ -10,8 +11,8 @@ QsoModel qso(String call, String band, DateTime at, {String? contest}) =>
       mode: 'SSB',
       rstSent: '59',
       rstRcvd: '59',
-      stationProfileId: 1,
-      rawAdif: {if (contest != null) 'CONTEST_ID': contest},
+      stationProfileId: station,
+      rawAdif: {if (contest != null) 'CONTEST_ID': contest, ...raw},
     );
 
 void main() {
@@ -56,5 +57,24 @@ void main() {
                 from: start)
             .isEmpty,
         isTrue);
+  });
+
+  test('a QSO refreshed from the server (no CONTEST_ID) counts by its exchange',
+      () {
+    final at = start.add(const Duration(hours: 3));
+    final server = [
+      qso('SQ4MK', '20m', at, raw: const {'STX_STRING': '15', 'SRX_STRING': '15'}),
+      qso('SQ4MK', '40m', at), // no exchange: an ordinary QSO
+      qso('SQ4MK', '15m', at, raw: const {'SRX': '7'}, station: 2),
+    ];
+    final w = contestWorked(
+        log: server,
+        callsign: 'SQ4MK',
+        band: '20m',
+        contestId: 'CQ-WW-SSB',
+        from: start,
+        stationId: 1);
+    expect(w.dupeOf?.band, '20m');
+    expect(w.otherBands, isEmpty);
   });
 }

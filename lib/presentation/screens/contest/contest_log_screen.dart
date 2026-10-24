@@ -876,6 +876,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
                       DateTime.now()
                           .toUtc()
                           .subtract(kContestWindowWithoutSession),
+                  stationId: _stationId,
                 ),
               ),
 
@@ -1292,12 +1293,14 @@ class _ContestDupeBanner extends ConsumerWidget {
   final String band;
   final String contestId;
   final DateTime from;
+  final int? stationId;
 
   const _ContestDupeBanner({
     required this.callsign,
     required this.band,
     required this.contestId,
     required this.from,
+    required this.stationId,
   });
 
   @override
@@ -1310,7 +1313,8 @@ class _ContestDupeBanner extends ConsumerWidget {
         callsign: callsign,
         band: band,
         contestId: contestId,
-        from: from);
+        from: from,
+        stationId: stationId);
     if (w.isEmpty) return const SizedBox.shrink();
 
     final l10n = context.l10n;
