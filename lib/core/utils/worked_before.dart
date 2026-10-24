@@ -1,4 +1,5 @@
 import '../../data/models/qso_model.dart';
+import '../dxcc/dxcc_prefix_matcher.dart';
 
 /// What the log already holds for the contact being entered: whether its
 /// DXCC entity is new overall, on this band or in this mode, and whether
@@ -19,57 +20,81 @@ class WorkedStatus {
   bool get isEmpty => !newCountry && !newBand && !newMode && !dupe;
 }
 
-/// Checks [callsign] on [band]/[mode] against [log] (the QSOs in scope).
-///
-/// The entity is matched by DXCC id when both sides have one, else by
-/// country name, case-insensitively (Wavelog stores names upper-case, its
-/// lookup returns them title-case). Without either — before the callsign
-/// lookup answers — only the dupe check runs. A dupe is the same callsign,
-/// band and mode on the same UTC day as [day].
+/// The DXCC entity (ADIF number) of [callsign]: the QSO's own DXCC field
+/// when it has one, else the callsign prefix. QSOs downloaded through the
+/// v2 API carry no DXCC (nor country), so the prefix is what usually
+/// decides — the same way the statistics screen counts DXCC.
+int? dxccEntityOf(String callsign, String? dxcc, DxccPrefixMatcher? matcher) {
+  final adif = int.tryParse(dxcc?.trim() ?? '');
+  if (adif != null && adif > 0) return adif;
+  final call = callsign.trim().toUpperCase().split('/').first;
+  return call.isEmpty ? null : matcher?.match(call)?.adif;
+}
+
+/// Bands and modes (lower-case / upper-case) worked per DXCC entity.
+class WorkedIndex {
+  final Map<int, Set<String>> bands;
+  final Map<int, Set<String>> modes;
+
+  const WorkedIndex(this.bands, this.modes);
+
+  /// Indexes [log]. Pure and sendable, so it can run on a background
+  /// isolate for logs of many thousands of QSOs.
+  factory WorkedIndex.build(
+    Iterable<({String call, String? dxcc, String band, String mode, String? submode})> log,
+    DxccPrefixMatcher? matcher,
+  ) {
+    final bands = <int, Set<String>>{};
+    final modes = <int, Set<String>>{};
+    for (final q in log) {
+      final entity = dxccEntityOf(q.call, q.dxcc, matcher);
+      if (entity == null) continue;
+      (bands[entity] ??= {}).add(q.band.toLowerCase());
+      final m = (modes[entity] ??= {})..add(q.mode.toUpperCase());
+      if (q.submode != null && q.submode!.isNotEmpty) {
+        m.add(q.submode!.toUpperCase());
+      }
+    }
+    return WorkedIndex(bands, modes);
+  }
+}
+
+/// Checks the contact being entered — [callsign] in DXCC [entity] on
+/// [band]/[mode] — against the log. Country, band and mode come from
+/// [index] and need [entity]; without either only the dupe check runs. A
+/// dupe is the same callsign, band and mode (or submode) on the same UTC
+/// day as [day].
 WorkedStatus workedStatus({
   required List<QsoModel> log,
+  required WorkedIndex? index,
   required String callsign,
+  required int? entity,
   required String band,
   required String mode,
   required DateTime day,
-  String? dxccId,
-  String? country,
 }) {
   final call = callsign.trim().toUpperCase();
   final b = band.toLowerCase();
   final m = mode.toUpperCase();
   final d = day.toUtc();
-  final name = country?.trim().toUpperCase();
 
-  bool sameMode(QsoModel q) =>
-      q.mode.toUpperCase() == m || q.submode?.toUpperCase() == m;
-
-  bool sameEntity(QsoModel q) {
-    if (dxccId != null && q.dxcc != null) return q.dxcc == dxccId;
-    return name != null &&
-        name.isNotEmpty &&
-        q.country?.trim().toUpperCase() == name;
-  }
-
-  final hasEntity = dxccId != null || (name != null && name.isNotEmpty);
-  var entityWorked = false, entityOnBand = false, entityInMode = false;
   var dupe = false;
   for (final q in log) {
-    final onBand = q.band.toLowerCase() == b;
-    if (hasEntity && sameEntity(q)) {
-      entityWorked = true;
-      entityOnBand |= onBand;
-      entityInMode |= sameMode(q);
-    }
-    if (!dupe && onBand && q.callsign.toUpperCase() == call && sameMode(q)) {
-      final t = q.dateTimeOn.toUtc();
-      dupe = t.year == d.year && t.month == d.month && t.day == d.day;
+    if (q.band.toLowerCase() != b || q.callsign.toUpperCase() != call) continue;
+    if (q.mode.toUpperCase() != m && q.submode?.toUpperCase() != m) continue;
+    final t = q.dateTimeOn.toUtc();
+    if (t.year == d.year && t.month == d.month && t.day == d.day) {
+      dupe = true;
+      break;
     }
   }
+
+  final bands = entity == null ? null : index?.bands[entity];
+  final worked = bands != null;
   return WorkedStatus(
-    newCountry: hasEntity && !entityWorked,
-    newBand: entityWorked && !entityOnBand,
-    newMode: entityWorked && !entityInMode,
+    newCountry: index != null && entity != null && !worked,
+    newBand: worked && !bands.contains(b),
+    newMode: worked && !(index!.modes[entity]?.contains(m) ?? false),
     dupe: dupe,
   );
 }

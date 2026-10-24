@@ -29,6 +29,7 @@ import '../../../providers/remote_datasource_provider.dart';
 import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_provider.dart';
+import '../../../providers/worked_before_provider.dart';
 import '../../widgets/rig/rig_link_button.dart';
 
 class AddQsoScreen extends ConsumerStatefulWidget {
@@ -896,7 +897,11 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final form = Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        // Keep the Save button above the system navigation bar: Android 15+
+        // draws apps edge-to-edge, and a ListView with its own padding does
+        // not add the bottom inset by itself.
+        padding: EdgeInsets.fromLTRB(
+            16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
         children: _buildFormContent(context),
       ),
     );
@@ -1133,7 +1138,6 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
           mode: _mode,
           day: _dateTimeOn,
           dxccId: _dxccId,
-          country: _dxccCountry,
         ),
 
       // ── Logbook özeti: bugün sayacı + son 5 QSO ────────────────────
@@ -1711,7 +1715,8 @@ class _TabletInfoPanel extends ConsumerWidget {
 
     if (callsign.length < 3) {
       return ListView(
-        padding: const EdgeInsets.fromLTRB(12, 16, 16, 16),
+        padding: EdgeInsets.fromLTRB(
+            12, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
         children: [
           // ── Placeholder ──────────────────────────────────────────
           Padding(
@@ -1746,7 +1751,8 @@ class _TabletInfoPanel extends ConsumerWidget {
     final previousAsync = ref.watch(previousQsosByCallsignProvider(callsign));
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 16, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+          12, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
       children: [
         // ── Callsign header ──────────────────────────────────────────
         Row(children: [
@@ -2322,7 +2328,6 @@ class _WorkedBeforeBadges extends ConsumerWidget {
   final String mode;
   final DateTime day;
   final String? dxccId;
-  final String? country;
 
   const _WorkedBeforeBadges({
     required this.callsign,
@@ -2330,21 +2335,21 @@ class _WorkedBeforeBadges extends ConsumerWidget {
     required this.mode,
     required this.day,
     this.dxccId,
-    this.country,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final log = ref.watch(scopedQsoProvider).valueOrNull;
     if (log == null) return const SizedBox.shrink();
+    final matcher = ref.watch(dxccMatcherProvider).valueOrNull;
     final s = workedStatus(
       log: log,
+      index: ref.watch(workedIndexProvider).valueOrNull,
       callsign: callsign,
+      entity: dxccEntityOf(callsign, dxccId, matcher),
       band: band,
       mode: mode,
       day: day,
-      dxccId: dxccId,
-      country: country,
     );
     if (s.isEmpty) return const SizedBox.shrink();
 

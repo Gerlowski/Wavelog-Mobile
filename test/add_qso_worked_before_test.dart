@@ -10,6 +10,7 @@ import 'package:wavelog_mobile/l10n/app_localizations.dart';
 import 'package:wavelog_mobile/presentation/screens/qso/add_qso_screen.dart';
 import 'package:wavelog_mobile/providers/qso_provider.dart';
 import 'package:wavelog_mobile/providers/remote_datasource_provider.dart';
+import 'package:wavelog_mobile/providers/worked_before_provider.dart';
 
 class _OfflineRemote extends WavelogRemoteDatasource {
   _OfflineRemote() : super(dio: Dio());
@@ -41,6 +42,7 @@ void main() {
       overrides: [
         wavelogRemoteDatasourceProvider.overrideWithValue(_OfflineRemote()),
         scopedQsoProvider.overrideWithValue(AsyncValue.data([earlier])),
+        dxccMatcherProvider.overrideWith((ref) => null),
       ],
       child: const MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
