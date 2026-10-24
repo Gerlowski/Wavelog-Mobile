@@ -2408,4 +2408,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get potaRefHint => 'US-1234, add more with Enter or a comma';
+
+  @override
+  String get potaUnknownParkTitle => 'Unknown park';
+
+  @override
+  String potaUnknownParkBody(String refs) {
+    return 'pota.app has no park $refs. Save the QSO anyway?';
+  }
 }

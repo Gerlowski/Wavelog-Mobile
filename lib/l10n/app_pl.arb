@@ -837,5 +837,7 @@
   "workedNewMode": "Nowy tryb ({mode})",
   "workedDupe": "Duplikat: dziś już było na {band} {mode}",
   "qsoReferencesSection": "POTA / SOTA / WWFF",
-  "potaRefHint": "PL-0123, kolejny park: Enter lub przecinek"
+  "potaRefHint": "PL-0123, kolejny park: Enter lub przecinek",
+  "potaUnknownParkTitle": "Nieznany park",
+  "potaUnknownParkBody": "W bazie pota.app nie ma parku {refs}. Zapisać QSO mimo to?"
 }

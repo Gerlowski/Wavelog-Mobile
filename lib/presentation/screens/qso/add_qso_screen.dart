@@ -30,6 +30,7 @@ import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_provider.dart';
 import '../../../providers/worked_before_provider.dart';
+import '../../widgets/pota/pota_park_autocomplete.dart';
 import '../../widgets/rig/rig_link_button.dart';
 
 class AddQsoScreen extends ConsumerStatefulWidget {
@@ -342,7 +343,8 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final pending = _potaInputCtrl.text.trim().toUpperCase();
     return [
       ..._potaRefs,
-      if (pending.isNotEmpty && !_potaRefs.contains(pending)) pending,
+      if (potaRefPattern.hasMatch(pending) && !_potaRefs.contains(pending))
+        pending,
     ];
   }
 
@@ -352,9 +354,17 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   void _onPotaInputFocusChanged() {
     if (_potaInputFocus.hasFocus) return;
     final r = _potaInputCtrl.text.trim().toUpperCase();
-    if (r.isEmpty) return;
+    // Only a reference: text typed to search by name ("biebrz") is not one.
+    if (!potaRefPattern.hasMatch(r)) return;
     _potaInputCtrl.clear();
     _addPotaRef(r);
+  }
+
+  /// A park picked from the pota.app suggestions: its name is known already.
+  void _onPotaParkSelected(PotaPark park) {
+    _potaInputCtrl.clear();
+    _potaNameCache[park.reference] = park.name;
+    _addPotaRef(park.reference);
   }
 
   void _onPotaInputChanged() {
@@ -746,11 +756,43 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     }
   }
 
+  bool _confirmingParks = false;
+
+  /// Parks pota.app answered "no such park" for (an unchecked or still
+  /// loading one doesn't count): asks before logging them anyway, e.g. a
+  /// park added to pota.app only just now.
+  Future<bool> _confirmUnknownParks() async {
+    final unknown =
+        _potaRefs.where((r) => _potaNameCache[r] == '').toList();
+    if (unknown.isEmpty) return true;
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.potaUnknownParkTitle),
+        content: Text(l10n.potaUnknownParkBody(unknown.join(', '))),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.save)),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
   Future<void> _submit() async {
     // Enter can reach here twice for one press (the hardware shortcut and
     // the field's submit action), never save the QSO twice.
-    if (_isSaving) return;
+    if (_isSaving || _confirmingParks) return;
     if (!_formKey.currentState!.validate()) return;
+    _confirmingParks = true;
+    final parksOk = await _confirmUnknownParks();
+    _confirmingParks = false;
+    if (!parksOk || !mounted) return;
 
     final effectiveStation = _effectiveStation;
     final stationId = effectiveStation?.id;
@@ -1535,28 +1577,38 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                     ],
                   ),
                 ),
-              TextFormField(
+              PotaParkAutocomplete(
                 controller: _potaInputCtrl,
                 focusNode: _potaInputFocus,
-                textInputAction: TextInputAction.done,
-                // Enter adds the park and stays here for another one.
-                onEditingComplete: () {},
-                decoration: InputDecoration(
-                  labelText: 'POTA',
-                  hintText: context.l10n.potaRefHint,
-                  prefixIcon: const Icon(Icons.park_outlined, size: 20),
+                onSelected: _onPotaParkSelected,
+                fieldBuilder: (context, selectHighlighted) => TextFormField(
+                  controller: _potaInputCtrl,
+                  focusNode: _potaInputFocus,
+                  textInputAction: TextInputAction.done,
+                  // Enter adds the park and stays here for another one.
+                  onEditingComplete: () {},
+                  decoration: InputDecoration(
+                    labelText: 'POTA',
+                    hintText: context.l10n.potaRefHint,
+                    prefixIcon: const Icon(Icons.park_outlined, size: 20),
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                  onFieldSubmitted: (value) {
+                    final r = value.trim().toUpperCase();
+                    // Enter on an empty field ends the Enter chain: save.
+                    if (r.isEmpty) {
+                      _submit();
+                      return;
+                    }
+                    if (!potaRefPattern.hasMatch(r)) {
+                      // A name being searched: take the top suggestion.
+                      selectHighlighted();
+                      return;
+                    }
+                    _potaInputCtrl.clear();
+                    _addPotaRef(r);
+                  },
                 ),
-                textCapitalization: TextCapitalization.characters,
-                onFieldSubmitted: (value) {
-                  final r = value.trim().toUpperCase();
-                  // Enter on an empty field ends the Enter chain: save.
-                  if (r.isEmpty) {
-                    _submit();
-                    return;
-                  }
-                  _potaInputCtrl.clear();
-                  _addPotaRef(r);
-                },
               ),
               if (_potaRefs.isNotEmpty)
                 Padding(
