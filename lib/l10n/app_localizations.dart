@@ -4606,6 +4606,12 @@ abstract class AppLocalizations {
   /// **'Dupe: already worked today on {band} {mode}'**
   String workedDupe(String band, String mode);
 
+  /// Note under the station's integrations: settings the v2 API does not expose
+  ///
+  /// In en, this message translates to:
+  /// **'QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS and the default eQSL message are set in Wavelog\'s web interface: the API does not expose them to the app.'**
+  String get stationWebOnlySettingsHint;
+
   /// QSO form section for the other station's park, summit or WWFF area
   ///
   /// In en, this message translates to:

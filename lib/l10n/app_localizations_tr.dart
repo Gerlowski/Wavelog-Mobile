@@ -2395,6 +2395,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get stationWebOnlySettingsHint =>
+      'QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS and the default eQSL message are set in Wavelog\'s web interface: the API does not expose them to the app.';
+
+  @override
   String get qsoReferencesSection => 'POTA / SOTA / WWFF';
 
   @override
