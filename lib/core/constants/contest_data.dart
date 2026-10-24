@@ -194,3 +194,22 @@ const List<BuiltinContest> kBuiltinContests = [
   BuiltinContest(adifName: 'YOTA',                  displayName: 'YOTA Contest'),
   BuiltinContest(adifName: 'ZL-SPRINT',             displayName: 'ZL Sprint'),
 ];
+
+/// What the exchange of a contest is, for the few contests whose exchange is
+/// a zone: the setup then turns on the exchange field instead of a serial,
+/// pre-fills both sides with the zone and logs the received one as the
+/// station's zone as well.
+enum ContestZone { cq, itu }
+
+/// The zone [adifName]'s exchange carries, or null for serial / free-text
+/// exchanges.
+ContestZone? contestZoneOf(String adifName) {
+  final id = adifName.trim().toUpperCase();
+  if (id.startsWith('CQ-WW-')) return ContestZone.cq;
+  if (id == 'IARU-HF') return ContestZone.itu;
+  return null;
+}
+
+/// The default exchange fields for a new session of [adifName].
+List<String> defaultExchangeFields(String adifName) =>
+    contestZoneOf(adifName) != null ? const ['exchange'] : const ['serial'];
