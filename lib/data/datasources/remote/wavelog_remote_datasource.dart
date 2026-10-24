@@ -808,31 +808,37 @@ class WavelogRemoteDatasource {
     }
   }
 
+  /// Logs one QSO and links it to contest session [contestSessionId].
+  ///
+  /// Sent as a single JSON QSO, not as an ADIF import: only the JSON create
+  /// answers with the new QSO's id, and the link needs it. (An ADIF import
+  /// answers with counts only, so no QSO was ever linked.) The JSON body
+  /// takes the ADIF field names; only FREQ / FREQ_RX are in Hz there.
   Future<void> logContestQso({
     required int contestSessionId,
     required int stationProfileId,
     required String adifString,
   }) async {
+    final record = AdifParser.parse(adifString).firstOrNull;
+    if (record == null) throw const ServerException('Empty ADIF record');
+    final body = <String, dynamic>{
+      'station_profile_id': stationProfileId,
+      'import_type': 'json',
+    };
+    for (final MapEntry(:key, :value) in record.entries) {
+      final mhz = key == 'FREQ' || key == 'FREQ_RX' ? double.tryParse(value) : null;
+      body[key.toLowerCase()] = mhz != null ? (mhz * 1e6).round() : value;
+    }
+
     int? qsoId;
     try {
-      final response = await _dio.post(
-        ApiEndpoints.qso,
-        data: {
-          'station_profile_id': stationProfileId,
-          'import_type': 'adif',
-          'adif': adifString,
-        },
-      );
+      final response = await _dio.post(ApiEndpoints.qso, data: body);
       final raw = response.data;
       if (raw is Map) {
         final d = raw['data'];
         qsoId = _parseInt(d is Map ? d['id'] : null);
       }
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError) {
-        await importQso(adifString, stationProfileId);
-        return;
-      }
       throw _mapDioException(e);
     }
 
@@ -842,8 +848,10 @@ class WavelogRemoteDatasource {
           ApiEndpoints.contestById(contestSessionId),
           data: {'link_qso_ids': [qsoId]},
         );
-      } on DioException catch (_) {
-        // QSO logged but not linked to session, non-critical
+      } on DioException catch (e) {
+        // The QSO is in the log; only the session link is missing, which the
+        // web UI can still add ("Attach to contest").
+        debugPrint('Contest link failed for QSO $qsoId: ${e.message}');
       }
     }
   }
