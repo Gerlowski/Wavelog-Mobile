@@ -10,10 +10,12 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/utils/error_l10n.dart';
+import '../../../core/utils/worked_before.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/qso_scope.dart';
 import '../../../data/models/qso_model.dart';
 import '../../../providers/qso_provider.dart';
+import '../../../providers/worked_before_provider.dart';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -48,18 +50,39 @@ class _QsoMarker {
   });
 }
 
-// Top-level: runs in isolate — no Flutter imports allowed here
+// Top-level: runs in isolate — no Flutter imports allowed here.
+// One marker per callsign: at the grid of its newest QSO that has one, else
+// at the centre of its DXCC entity ('la'/'lo'), as Wavelog's own map does
+// for QSOs without a grid (contest QSOs often have none).
 List<_QsoMarker> _processQsoData(List<Map<String, String>> raw) {
   final seen = <String>{};
   final result = <_QsoMarker>[];
-  for (final q in raw) {
-    final callsign = q['c'] ?? '';
-    if (callsign.isEmpty || !seen.add(callsign)) continue;
-    final grid = q['g'] ?? '';
-    if (grid.length < 4) continue;
-    final ll = _gridToLatLng(grid);
-    if (ll == null) continue;
-    result.add(_QsoMarker(
+  for (final byGrid in [true, false]) {
+    for (final q in raw) {
+      final callsign = q['c'] ?? '';
+      if (callsign.isEmpty || seen.contains(callsign)) continue;
+      final grid = q['g'] ?? '';
+      final ll = byGrid
+          ? (grid.length < 4 ? null : _gridToLatLng(grid))
+          : _latLng(q['la'], q['lo']);
+      if (ll == null) continue;
+      seen.add(callsign);
+      result.add(_marker(q, callsign, ll, byGrid ? grid : ''));
+    }
+  }
+  return result;
+}
+
+LatLng? _latLng(String? lat, String? lon) {
+  final la = double.tryParse(lat ?? '');
+  final lo = double.tryParse(lon ?? '');
+  if (la == null || lo == null || la.abs() > 90 || lo.abs() > 180) return null;
+  return LatLng(la, lo);
+}
+
+_QsoMarker _marker(
+        Map<String, String> q, String callsign, LatLng ll, String grid) =>
+    _QsoMarker(
       callsign: callsign,
       point: ll,
       band: q['b'] ?? '',
@@ -73,10 +96,7 @@ List<_QsoMarker> _processQsoData(List<Map<String, String>> raw) {
       country: q['co'] ?? '',
       freq: q['f'] ?? '',
       dateStr: q['d'] ?? '',
-    ));
-  }
-  return result;
-}
+    );
 
 LatLng? _gridToLatLng(String grid) {
   try {
@@ -99,20 +119,30 @@ final _mapMarkersProvider = FutureProvider<List<_QsoMarker>>((ref) async {
   final scopeIds = ref.watch(scopeStationIdsProvider);
   final qsos = filterByStations(
       Hive.box<QsoModel>('qso_cache').values.toList(), scopeIds);
+  // Not awaited: grids draw at once, DXCC fallbacks once the catalog is in.
+  final matcher = ref.watch(dxccMatcherProvider).valueOrNull;
   final fmt = DateFormat('dd MMM yyyy  HH:mm');
-  final raw = qsos.map((q) => {
-    'c': q.callsign,
-    'g': q.gridSquare ?? '',
-    'b': q.band,
-    'm': q.mode,
-    'sm': q.submode ?? '',
-    'rs': q.rstSent,
-    'rr': q.rstRcvd,
-    'n': q.name ?? '',
-    'qt': q.qth ?? '',
-    'co': q.country ?? '',
-    'f': q.freqMhz != null ? '${q.freqMhz!.toStringAsFixed(3)} MHz' : '',
-    'd': fmt.format(q.dateTimeOn.toLocal()),
+  final raw = qsos.map((q) {
+    final adif = dxccEntityOf(q.callsign, q.dxcc, matcher);
+    final entity = adif == null ? null : matcher?.byAdif(adif);
+    return {
+      'c': q.callsign,
+      'g': q.gridSquare ?? '',
+      'b': q.band,
+      'm': q.mode,
+      'sm': q.submode ?? '',
+      'rs': q.rstSent,
+      'rr': q.rstRcvd,
+      'n': q.name ?? '',
+      'qt': q.qth ?? '',
+      'co': q.country ?? entity?.name ?? '',
+      'f': q.freqMhz != null ? '${q.freqMhz!.toStringAsFixed(3)} MHz' : '',
+      'd': fmt.format(q.dateTimeOn.toLocal()),
+      if (entity?.lat != null && entity?.lon != null) ...{
+        'la': entity!.lat!.toString(),
+        'lo': entity.lon!.toString(),
+      },
+    };
   }).toList();
   return compute(_processQsoData, raw);
 });
