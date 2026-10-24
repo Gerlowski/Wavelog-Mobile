@@ -925,6 +925,9 @@ class WavelogRemoteDatasource {
     if (s.eqslQthNickname != null && s.eqslQthNickname!.isNotEmpty) {
       body['eqsl_qth_nickname'] = s.eqslQthNickname;
     }
+    body['clublog_upload'] = s.clublogIgnore
+        ? 'disabled'
+        : (s.clublogRealtime ? 'live' : 'on');
     return body;
   }
 

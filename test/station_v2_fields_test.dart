@@ -57,4 +57,20 @@ void main() {
     expect((adapter.bodies.last as Map).containsKey('eqsl_qth_nickname'),
         isFalse);
   });
+
+  test('the ClubLog upload mode round-trips through the v2 clublog_upload',
+      () async {
+    final adapter = _RecordingAdapter();
+    final remote = WavelogRemoteDatasource(
+        dio: Dio(BaseOptions(baseUrl: 'https://log.example'))
+          ..httpClientAdapter = adapter);
+    for (final mode in ['live', 'on', 'disabled']) {
+      final station =
+          StationModel.fromJson({...v2Json, 'clublog_upload': mode});
+      expect(station.clublogRealtime, mode == 'live');
+      expect(station.clublogIgnore, mode == 'disabled');
+      await remote.updateStation(station);
+      expect((adapter.bodies.last as Map)['clublog_upload'], mode);
+    }
+  });
 }

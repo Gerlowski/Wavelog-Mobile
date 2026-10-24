@@ -119,8 +119,14 @@ class StationModel {
       webAdifApiKey: json['webadifapikey']?.toString(),
       qrzRealtime: _parseInt(json['qrzrealtime']) ?? -1,
       webAdifRealtime: _parseBool(json['webadifrealtime']),
-      clublogRealtime: _parseBool(json['clublogrealtime']),
-      clublogIgnore: _parseBool(json['clublogignore']),
+      // v2 API: one clublog_upload mode (live / on / disabled) for the two
+      // legacy columns.
+      clublogRealtime: json.containsKey('clublog_upload')
+          ? json['clublog_upload'] == 'live'
+          : _parseBool(json['clublogrealtime']),
+      clublogIgnore: json.containsKey('clublog_upload')
+          ? json['clublog_upload'] == 'disabled'
+          : _parseBool(json['clublogignore']),
       hrdlogRealtime: _parseInt(json['hrdlogrealtime']) ?? -1,
       oqrsEnabled: _parseBool(json['oqrs']),
       oqrsText: json['oqrs_text']?.toString(),
