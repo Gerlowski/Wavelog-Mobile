@@ -5,6 +5,7 @@ import '../../../core/utils/error_l10n.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../data/models/station_logbook_model.dart';
 import '../../../data/models/station_model.dart';
+import '../../../providers/remote_datasource_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_logbook_provider.dart';
 import '../../../providers/station_provider.dart';
@@ -454,7 +455,7 @@ class _LocationTile extends ConsumerWidget {
   }
 
   Future<void> _activate(BuildContext context, WidgetRef ref) async {
-    await ref.read(stationProvider.notifier).activate(station);
+    await ref.read(settingsProvider.notifier).setActiveStation(station);
     if (context.mounted) {
       // Clear any still-queued snackbar from a previous rapid switch first,
       // otherwise it plays later, by which point it names a station that's
@@ -464,6 +465,8 @@ class _LocationTile extends ConsumerWidget {
         ..showSnackBar(SnackBar(
             content: Text(context.l10n.stationActivated(station.callsign))));
     }
+    // Sync active station to server in background — ignore failures (offline-safe)
+    ref.read(wavelogRemoteDatasourceProvider).setActiveStation(station.id).catchError((_) {});
   }
 
   Future<void> _handle(
