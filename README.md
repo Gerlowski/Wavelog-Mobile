@@ -89,6 +89,14 @@ Community translations are welcome and hosted on [Weblate](https://translate.wav
 - [Dio](https://pub.dev/packages/dio) — HTTP client
 - [flutter_svg](https://pub.dev/packages/flutter_svg) — SVG rendering
 
+## Author
+
+**[TA4RX / SP9AQG](https://github.com/TA4RX-SP9AQG)** — creator and main developer
+
+## Contributors
+
+- **[Gerlowski](https://github.com/Gerlowski)** — USB CAT radio control (live frequency/mode following, auto-connect, tap-a-spot-to-tune), worked-before badges, UI fixes
+
 ## Contributing
 
 Pull requests are welcome. Please target the **`main-dev`** branch — do not open PRs directly against `main`.
@@ -109,7 +117,3 @@ Signing is configured via `android/key.properties` (not included in the reposito
 ## License
 
 This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
-
----
-
-By TA4RX / SP9AQG
