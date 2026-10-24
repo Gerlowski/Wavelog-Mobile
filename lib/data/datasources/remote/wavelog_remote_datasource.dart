@@ -416,6 +416,20 @@ class WavelogRemoteDatasource {
     }
   }
 
+  /// The callsign of the account the API token belongs to (`owner` of
+  /// GET /api/v2/token), or null when the server can't say.
+  Future<String?> getTokenOwner() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.token);
+      final raw = response.data;
+      final data = raw is Map && raw['data'] is Map ? raw['data'] : raw;
+      final owner = data is Map ? data['owner']?.toString().trim() : null;
+      return owner == null || owner.isEmpty ? null : owner.toUpperCase();
+    } on DioException catch (_) {
+      return null;
+    }
+  }
+
   /// Same request as [getVersion] but rethrows a mapped [AppException] on
   /// failure instead of swallowing it, used by the server-setup connection
   /// test, which needs to tell an SSL failure apart from "no server here".

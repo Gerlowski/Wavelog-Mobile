@@ -506,6 +506,11 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
     // server record, and the ADIF generator then skips the model fields.
     final raw = <String, String>{};
     if (_contestId.isNotEmpty) raw['CONTEST_ID'] = _contestId;
+    // Wavelog's contest screen lets only the QSO's operator edit it, and
+    // compares with the account's callsign: without OPERATOR nobody can.
+    final operator = contestOperator(
+        ref.read(accountCallsignProvider).valueOrNull, _station?.callsign);
+    if (operator != null) raw['OPERATOR'] = operator;
     if (_showSerial) {
       raw['STX'] = _serialSent.toString().padLeft(3, '0');
       if (_serialRcvdCtrl.text.trim().isNotEmpty) raw['SRX'] = _serialRcvdCtrl.text.trim();
@@ -742,6 +747,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
         : null;
     // Rebuild when the stations load or the active one changes.
     ref.watch(stationProvider);
+    ref.watch(accountCallsignProvider); // loaded before the first save
     ref.watch(settingsProvider.select((s) => s.activeStationProfileId));
     final station = _station;
 

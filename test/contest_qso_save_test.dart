@@ -112,4 +112,11 @@ void main() {
       expect(defaultExchangeFields('CQ-WPX-SSB'), ['serial']);
     });
   });
+
+  test('the operator is the account callsign, else the base station call', () {
+    expect(contestOperator('sp4bl', 'SP4BL/P'), 'SP4BL');
+    expect(contestOperator(null, 'SP4BL/P'), 'SP4BL');
+    expect(contestOperator(null, 'EA8/SP4BL'), 'SP4BL');
+    expect(contestOperator(null, null), isNull);
+  });
 }
