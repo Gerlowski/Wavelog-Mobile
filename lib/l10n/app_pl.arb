@@ -836,5 +836,12 @@
   "workedNewBand": "Nowe pasmo ({band})",
   "workedNewMode": "Nowy tryb ({mode})",
   "workedDupe": "Duplikat: dziś już było na {band} {mode}",
-  "stationWebOnlySettingsHint": "QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS i domyślną wiadomość eQSL ustawia się w Wavelogu przez stronę www: API nie udostępnia ich aplikacji."
+  "stationWebOnlySettingsHint": "QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS i domyślną wiadomość eQSL ustawia się w Wavelogu przez stronę www: API nie udostępnia ich aplikacji.",
+  "qsoReferencesSection": "POTA / SOTA / WWFF",
+  "potaRefHint": "PL-0123, kolejny park: Enter lub przecinek",
+  "potaUnknownParkTitle": "Nieznany park",
+  "potaUnknownParkBody": "W bazie pota.app nie ma parku {refs}. Zapisać QSO mimo to?",
+  "spotNewPark": "Nowy park",
+  "potaActivationProgress": "{park}: {count}/{needed} QSO dziś (UTC)",
+  "potaActivationDone": "{park}: aktywacja zaliczona ({count} QSO dziś)"
 }

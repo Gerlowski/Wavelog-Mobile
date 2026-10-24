@@ -2406,4 +2406,31 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get stationWebOnlySettingsHint =>
       'QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS and the default eQSL message are set in Wavelog\'s web interface: the API does not expose them to the app.';
+
+  @override
+  String get qsoReferencesSection => 'POTA / SOTA / WWFF';
+
+  @override
+  String get potaRefHint => 'US-1234, add more with Enter or a comma';
+
+  @override
+  String get potaUnknownParkTitle => 'Unknown park';
+
+  @override
+  String potaUnknownParkBody(String refs) {
+    return 'pota.app has no park $refs. Save the QSO anyway?';
+  }
+
+  @override
+  String get spotNewPark => 'New park';
+
+  @override
+  String potaActivationProgress(String park, int count, int needed) {
+    return '$park: $count/$needed QSOs today (UTC)';
+  }
+
+  @override
+  String potaActivationDone(String park, int count) {
+    return '$park: activated ($count QSOs today)';
+  }
 }

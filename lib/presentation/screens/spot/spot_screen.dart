@@ -12,6 +12,7 @@ import '../../../data/datasources/remote/sota_datasource.dart';
 import '../../../data/models/pota_spot_model.dart';
 import '../../../data/models/sota_spot_model.dart';
 import '../../../data/models/wwff_spot_model.dart';
+import '../../../providers/pota_stats_provider.dart';
 import '../../../providers/dx_spot_provider.dart';
 import '../../../providers/pota_spot_provider.dart';
 import '../../../providers/settings_provider.dart';
@@ -343,11 +344,16 @@ String _formatAge(DateTime dt) {
 /// Navigates to the QSO form, prefilled from a tapped spot. Frequency is
 /// always passed on; mode only when it's a recognised value — otherwise the
 /// user picks it themselves on the form (many spots, SOTA especially, don't
-/// report a mode at all).
+/// report a mode at all). The activator's POTA / SOTA / WWFF reference goes
+/// along too, so a hunted park, summit or area is logged with the QSO.
 void _goLogSpot(BuildContext context, _SpotView spot) {
   final params = <String, String>{'callsign': spot.activator};
   if (spot.freqMhzForLog != null) params['freq'] = spot.freqMhzForLog!;
   if (spot.modeForLog != null) params['mode'] = spot.modeForLog!;
+  final ref = spot.refForLog;
+  if (ref != null && ref.ref.trim().isNotEmpty) {
+    params[ref.key] = ref.ref.trim().toUpperCase();
+  }
   context.push(Uri(path: '/add-qso', queryParameters: params).toString());
 }
 
@@ -387,6 +393,14 @@ class _SpotView {
   /// which case this stays null and the user picks it manually on the form.
   final String? modeForLog;
 
+  /// The activator's reference for the QSO form, under its query key
+  /// ('pota' / 'sota' / 'wwff'); null for DX spots.
+  final ({String key, String ref})? refForLog;
+
+  /// Shown next to the mode when set, e.g. "New park" for a park not yet
+  /// in the log.
+  final String? badge;
+
   const _SpotView({
     required this.activator,
     required this.mode,
@@ -399,6 +413,8 @@ class _SpotView {
     required this.time,
     this.freqMhzForLog,
     this.modeForLog,
+    this.refForLog,
+    this.badge,
   });
 }
 
@@ -443,6 +459,21 @@ class _SpotTile extends StatelessWidget {
                   fontWeight: FontWeight.bold, fontSize: 15)),
           const SizedBox(width: 8),
           _ModeChip(spot.mode),
+          if (spot.badge != null) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: Colors.green.shade700,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(spot.badge!,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600)),
+            ),
+          ],
           const Spacer(),
           Text(
             spot.freqDisplay,
@@ -743,6 +774,7 @@ class _PotaSpotContent extends ConsumerWidget {
     final spots = ref.watch(filteredPotaSpotsProvider);
     final filter = ref.watch(potaSpotFilterProvider);
     final allSpots = ref.watch(potaSpotsProvider).valueOrNull ?? [];
+    final hunted = ref.watch(huntedParksProvider);
 
     void update(PotaSpotFilter f) =>
         ref.read(potaSpotFilterProvider.notifier).state = f;
@@ -785,6 +817,11 @@ class _PotaSpotContent extends ConsumerWidget {
                       band: s.band,
                       freqDisplay: s.freqDisplay,
                       refIcon: Icons.park_outlined,
+                      refForLog: (key: 'pota', ref: s.reference),
+                      badge: hunted != null &&
+                              !hunted.contains(s.reference.toUpperCase())
+                          ? l10n.spotNewPark
+                          : null,
                       refLine: s.parkName.isNotEmpty
                           ? '${s.reference}  ${s.parkName}'
                           : s.reference,
@@ -860,6 +897,7 @@ class _SotaSpotContent extends ConsumerWidget {
                       band: s.band,
                       freqDisplay: s.freqDisplay,
                       refIcon: Icons.terrain_outlined,
+                      refForLog: (key: 'sota', ref: s.reference),
                       refLine: s.summitDetails.isNotEmpty
                           ? '${s.reference}  ${s.summitDetails}'
                           : s.reference,
@@ -934,6 +972,7 @@ class _WwffSpotContent extends ConsumerWidget {
                       band: s.band,
                       freqDisplay: s.freqDisplay,
                       refIcon: Icons.eco_outlined,
+                      refForLog: (key: 'wwff', ref: s.reference),
                       refLine: s.referenceName.isNotEmpty
                           ? '${s.reference}  ${s.referenceName}'
                           : s.reference,

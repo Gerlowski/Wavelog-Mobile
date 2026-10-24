@@ -2401,4 +2401,31 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get stationWebOnlySettingsHint =>
       'QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS i domyślną wiadomość eQSL ustawia się w Wavelogu przez stronę www: API nie udostępnia ich aplikacji.';
+
+  @override
+  String get qsoReferencesSection => 'POTA / SOTA / WWFF';
+
+  @override
+  String get potaRefHint => 'PL-0123, kolejny park: Enter lub przecinek';
+
+  @override
+  String get potaUnknownParkTitle => 'Nieznany park';
+
+  @override
+  String potaUnknownParkBody(String refs) {
+    return 'W bazie pota.app nie ma parku $refs. Zapisać QSO mimo to?';
+  }
+
+  @override
+  String get spotNewPark => 'Nowy park';
+
+  @override
+  String potaActivationProgress(String park, int count, int needed) {
+    return '$park: $count/$needed QSO dziś (UTC)';
+  }
+
+  @override
+  String potaActivationDone(String park, int count) {
+    return '$park: aktywacja zaliczona ($count QSO dziś)';
+  }
 }

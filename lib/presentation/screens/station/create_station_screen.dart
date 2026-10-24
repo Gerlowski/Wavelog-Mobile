@@ -9,6 +9,7 @@ import '../../../data/models/dxcc_entity_model.dart';
 import '../../../data/models/state_subdivision_model.dart';
 import '../../../data/models/station_model.dart';
 import '../../../providers/station_provider.dart';
+import '../../widgets/pota/pota_park_autocomplete.dart';
 
 class CreateStationScreen extends ConsumerStatefulWidget {
   final StationModel? existingStation;
@@ -33,6 +34,8 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
 
   // DXCC — stored as int id; DxccEntity holds name for display
   DxccEntity? _selectedDxcc;
+  // Set when Save is pressed on a new location without a DXCC entity.
+  bool _dxccMissing = false;
   List<DxccEntity> _dxccList = [];
   bool _dxccLoading = false;
   bool _dxccError = false;
@@ -51,6 +54,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
   final _sotaCtrl    = TextEditingController();
   final _wwffCtrl    = TextEditingController();
   final _potaCtrl    = TextEditingController();
+  final _potaFocus   = FocusNode();
   final _sigCtrl     = TextEditingController();
   final _sigInfoCtrl = TextEditingController();
 
@@ -182,6 +186,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
     _sotaCtrl.dispose();
     _wwffCtrl.dispose();
     _potaCtrl.dispose();
+    _potaFocus.dispose();
     _sigCtrl.dispose();
     _sigInfoCtrl.dispose();
     _eqslNickCtrl.dispose();
@@ -218,7 +223,12 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
       );
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Wavelog requires DXCC, CQ and ITU zone for a new location and answers
+    // a validation error without them, which surfaced as the misleading
+    // "profile may already exist". Check them here instead.
+    final dxccMissing = !_isEditing && _selectedDxcc == null;
+    setState(() => _dxccMissing = dxccMissing);
+    if (!_formKey.currentState!.validate() || dxccMissing) return;
     setState(() => _saving = true);
     final l10n = context.l10n;
 
@@ -260,6 +270,11 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
     }
   }
 
+  String? _requiredZone(String? v) =>
+      !_isEditing && (int.tryParse(v?.trim() ?? '') ?? 0) <= 0
+          ? context.l10n.required
+          : null;
+
   Future<void> _pickDxcc() async {
     if (_dxccList.isEmpty) return;
     final result = await showModalBottomSheet<DxccEntity>(
@@ -273,6 +288,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
     if (result != null && mounted) {
       setState(() {
         _selectedDxcc = result;
+        _dxccMissing = false;
         if (result.cqZone > 0) _cqCtrl.text = result.cqZone.toString();
         if (result.ituZone > 0) _ituCtrl.text = result.ituZone.toString();
         _selectedState = null;
@@ -366,6 +382,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
               selected: _selectedDxcc,
               loading: _dxccLoading,
               hasError: _dxccError,
+              errorText: _dxccMissing ? l10n.required : null,
               onTap: _dxccError ? _loadDxccList : _pickDxcc,
             ),
             const SizedBox(height: 12),
@@ -411,6 +428,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
                   decoration: const InputDecoration(
                       labelText: 'CQ Zone', hintText: '20'),
                   keyboardType: TextInputType.number,
+                  validator: _requiredZone,
                 ),
               ),
               const SizedBox(width: 12),
@@ -420,6 +438,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
                   decoration: const InputDecoration(
                       labelText: 'ITU Zone', hintText: '29'),
                   keyboardType: TextInputType.number,
+                  validator: _requiredZone,
                 ),
               ),
             ]),
@@ -457,11 +476,18 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextFormField(
+                // Find the park being activated by name, too.
+                child: PotaParkAutocomplete(
                   controller: _potaCtrl,
-                  decoration: InputDecoration(
-                      labelText: l10n.pota, hintText: 'TA-0001'),
-                  textCapitalization: TextCapitalization.characters,
+                  focusNode: _potaFocus,
+                  onSelected: (_) {}, // the field now holds its reference
+                  fieldBuilder: (context, _) => TextFormField(
+                    controller: _potaCtrl,
+                    focusNode: _potaFocus,
+                    decoration: InputDecoration(
+                        labelText: l10n.pota, hintText: 'TA-0001'),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
                 ),
               ),
             ]),
@@ -582,12 +608,14 @@ class _DxccPickerField extends StatelessWidget {
   final DxccEntity? selected;
   final bool loading;
   final bool hasError;
+  final String? errorText;
   final VoidCallback onTap;
   const _DxccPickerField({
     required this.selected,
     required this.loading,
     required this.onTap,
     this.hasError = false,
+    this.errorText,
   });
 
   @override
@@ -601,7 +629,7 @@ class _DxccPickerField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: l10n.dxccCountry,
           border: const OutlineInputBorder(),
-          errorText: hasError ? context.l10n.error : null,
+          errorText: hasError ? context.l10n.error : errorText,
           suffixIcon: loading
               ? const Padding(
                   padding: EdgeInsets.all(12),

@@ -15,6 +15,7 @@ import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/pota_activity.dart';
 import '../../../core/utils/worked_before.dart';
 import '../../../data/models/callsign_lookup_model.dart';
 import '../../../data/models/qso_model.dart';
@@ -30,6 +31,7 @@ import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_provider.dart';
 import '../../../providers/worked_before_provider.dart';
+import '../../widgets/pota/pota_park_autocomplete.dart';
 import '../../widgets/rig/rig_link_button.dart';
 
 class AddQsoScreen extends ConsumerStatefulWidget {
@@ -46,12 +48,21 @@ class AddQsoScreen extends ConsumerStatefulWidget {
   /// which case this stays null and the user picks it manually.
   final String? prefillMode;
 
+  /// Spot-tap prefill — the activator's POTA park, SOTA summit or WWFF
+  /// area, logged as the QSO's POTA_REF / SOTA_REF / WWFF_REF.
+  final String? prefillPotaRef;
+  final String? prefillSotaRef;
+  final String? prefillWwffRef;
+
   const AddQsoScreen({
     super.key,
     this.prefillCallsign,
     this.editQso,
     this.prefillFrequencyMhz,
     this.prefillMode,
+    this.prefillPotaRef,
+    this.prefillSotaRef,
+    this.prefillWwffRef,
   });
 
   @override
@@ -91,6 +102,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   late FocusNode _rstRcvdFocus;
   final _freqFocus = FocusNode();
   final _rstSentFocus = FocusNode();
+  final _potaInputFocus = FocusNode();
+  final _sotaRefFocus = FocusNode();
+  final _wwffRefFocus = FocusNode();
   // When the last hardware Enter went down: tells a hardware-keyboard Enter
   // on the callsign (save, issue #48) from an on-screen keyboard one (walk
   // to the report), see _onCallsignSubmitted.
@@ -194,8 +208,10 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       _gridCtrl = TextEditingController();
       _commentCtrl = TextEditingController();
       _potaInputCtrl = TextEditingController();
-      _sotaRefCtrl = TextEditingController();
-      _wwffRefCtrl = TextEditingController();
+      _sotaRefCtrl = TextEditingController(text: widget.prefillSotaRef ?? '');
+      _wwffRefCtrl = TextEditingController(text: widget.prefillWwffRef ?? '');
+      final potaRef = widget.prefillPotaRef?.trim();
+      if (potaRef != null && potaRef.isNotEmpty) _potaRefs = [potaRef];
     }
 
     _callsignFocus = FocusNode();
@@ -204,6 +220,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _freqCtrl.addListener(_updateAutoSpotStatus);
     if (widget.editQso == null) _freqCtrl.addListener(_saveFreqDebounced);
     _potaInputCtrl.addListener(_onPotaInputChanged);
+    _potaInputFocus.addListener(_onPotaInputFocusChanged);
     if (edit == null) {
       // Follow the radio's dial while a CAT link is up; _saveFreqDebounced
       // then picks the matching band.
@@ -299,11 +316,15 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _freqCtrl.removeListener(_updateAutoSpotStatus);
     if (widget.editQso == null) _freqCtrl.removeListener(_saveFreqDebounced);
     _potaInputCtrl.removeListener(_onPotaInputChanged);
+    _potaInputFocus.removeListener(_onPotaInputFocusChanged);
     _callsignFocus.removeListener(_onCallsignFocusChange);
     _callsignFocus.dispose();
     _rstRcvdFocus.dispose();
     _freqFocus.dispose();
     _rstSentFocus.dispose();
+    _potaInputFocus.dispose();
+    _sotaRefFocus.dispose();
+    _wwffRefFocus.dispose();
     HardwareKeyboard.instance.removeHandler(_noteHardwareEnter);
     _callsignCtrl.dispose();
     _freqCtrl.dispose();
@@ -317,6 +338,34 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _sotaRefCtrl.dispose();
     _wwffRefCtrl.dispose();
     super.dispose();
+  }
+
+  List<String> get _potaRefsWithPending {
+    final pending = _potaInputCtrl.text.trim().toUpperCase();
+    return [
+      ..._potaRefs,
+      if (potaRefPattern.hasMatch(pending) && !_potaRefs.contains(pending))
+        pending,
+    ];
+  }
+
+  /// Leaving the POTA field confirms a typed park as Enter would, so it is
+  /// looked up (name shown, an unknown one flagged) rather than left as
+  /// unchecked text.
+  void _onPotaInputFocusChanged() {
+    if (_potaInputFocus.hasFocus) return;
+    final r = _potaInputCtrl.text.trim().toUpperCase();
+    // Only a reference: text typed to search by name ("biebrz") is not one.
+    if (!potaRefPattern.hasMatch(r)) return;
+    _potaInputCtrl.clear();
+    _addPotaRef(r);
+  }
+
+  /// A park picked from the pota.app suggestions: its name is known already.
+  void _onPotaParkSelected(PotaPark park) {
+    _potaInputCtrl.clear();
+    _potaNameCache[park.reference] = park.name;
+    _addPotaRef(park.reference);
   }
 
   void _onPotaInputChanged() {
@@ -677,20 +726,76 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     });
   }
 
-  Future<void> _submit() async {
-    // Enter can reach here twice for one press (the hardware shortcut and
-    // the field's submit action), never save the QSO twice.
-    if (_isSaving) return;
-    if (!_formKey.currentState!.validate()) return;
-
-    // Resolve the effective station: explicit selection → settings ID → first
-    // active station in the loaded list (handles stale or null activeStationProfileId).
+  /// The station the QSO is logged for: explicit selection → settings ID →
+  /// first active station in the loaded list (handles a stale or null
+  /// activeStationProfileId).
+  StationModel? get _effectiveStation {
     final stationList = ref.read(stationProvider).valueOrNull ?? [];
     final settingStationId = ref.read(settingsProvider).activeStationProfileId;
-    final effectiveStation = _selectedStation
+    return _selectedStation
         ?? stationList.where((s) => s.id == settingStationId).firstOrNull
         ?? stationList.where((s) => s.isActive).firstOrNull
         ?? stationList.firstOrNull;
+  }
+
+  /// Enter on RST rcvd. Logging from a park, summit or WWFF area, the chain
+  /// stops at that kind of reference field first, so a park-to-park contact
+  /// isn't saved before its reference is typed (Enter there on an empty
+  /// field saves); everywhere else, or with the reference already filled
+  /// in, it saves straight away.
+  void _afterReport() {
+    final s = _effectiveStation;
+    bool has(String? r) => r?.trim().isNotEmpty == true;
+    if (has(s?.pota) && _potaRefs.isEmpty) {
+      _focusAndSelect(_potaInputFocus, _potaInputCtrl);
+    } else if (has(s?.sota) && _sotaRefCtrl.text.trim().isEmpty) {
+      _focusAndSelect(_sotaRefFocus, _sotaRefCtrl);
+    } else if (has(s?.wwff) && _wwffRefCtrl.text.trim().isEmpty) {
+      _focusAndSelect(_wwffRefFocus, _wwffRefCtrl);
+    } else {
+      _submit();
+    }
+  }
+
+  bool _confirmingParks = false;
+
+  /// Parks pota.app answered "no such park" for (an unchecked or still
+  /// loading one doesn't count): asks before logging them anyway, e.g. a
+  /// park added to pota.app only just now.
+  Future<bool> _confirmUnknownParks() async {
+    final unknown =
+        _potaRefs.where((r) => _potaNameCache[r] == '').toList();
+    if (unknown.isEmpty) return true;
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.potaUnknownParkTitle),
+        content: Text(l10n.potaUnknownParkBody(unknown.join(', '))),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.save)),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  Future<void> _submit() async {
+    // Enter can reach here twice for one press (the hardware shortcut and
+    // the field's submit action), never save the QSO twice.
+    if (_isSaving || _confirmingParks) return;
+    if (!_formKey.currentState!.validate()) return;
+    _confirmingParks = true;
+    final parksOk = await _confirmUnknownParks();
+    _confirmingParks = false;
+    if (!parksOk || !mounted) return;
+
+    final effectiveStation = _effectiveStation;
     final stationId = effectiveStation?.id;
     if (stationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -708,8 +813,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final rawAdifMap = <String, String>{
       ...?widget.editQso?.rawAdif,
       if (_dxccFlag != null) 'APP_WAVELOG_FLAG': _dxccFlag!,
-      if (_potaRefs.isNotEmpty)
-        'POTA_REF': _potaRefs.join(','),
+      // A park typed but not yet confirmed with Enter or a comma counts too.
+      if (_potaRefsWithPending.isNotEmpty)
+        'POTA_REF': _potaRefsWithPending.join(','),
       if (_sotaRefCtrl.text.trim().isNotEmpty)
         'SOTA_REF': _sotaRefCtrl.text.trim().toUpperCase(),
       if (_wwffRefCtrl.text.trim().isNotEmpty)
@@ -1198,6 +1304,11 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       ),
       const SizedBox(height: 8),
 
+      // ── POTA activation progress, logging from a park ──────────────
+      if (widget.editQso == null &&
+          _effectiveStation?.pota?.trim().isNotEmpty == true)
+        _PotaActivationBadge(station: _effectiveStation!),
+
       // ── New country / band / mode, dupe ─────────────────────────────
       if (widget.editQso == null && _currentCallsign.length >= 3)
         _WorkedBeforeBadges(
@@ -1327,7 +1438,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             decoration: InputDecoration(labelText: l10n.rstRcvdField),
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _submit(),
+            onFieldSubmitted: (_) => _afterReport(),
             validator: (v) => validateRst(v, _mode),
           ),
         ),
@@ -1418,24 +1529,36 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         maxLines: 2,
       ),
 
-      // ── P2P referanslar (istasyonda POTA/SOTA/WWFF varsa görünür) ───
+      // ── POTA / SOTA / WWFF references of the other station ──────────
+      // Always available (hunting a park from home as much as park-to-park),
+      // folded away unless the active station is itself in a park, summit
+      // or WWFF area, or a reference is already filled in (e.g. from a spot).
       Builder(builder: (context) {
-        final stationList = stations.valueOrNull ?? [];
-        final settingStationId =
-            ref.read(settingsProvider).activeStationProfileId;
-        final effectiveStation = _selectedStation
-            ?? stationList.where((s) => s.id == settingStationId).firstOrNull
-            ?? stationList.where((s) => s.isActive).firstOrNull
-            ?? stationList.firstOrNull;
-        final showPota = effectiveStation?.pota?.trim().isNotEmpty == true;
-        final showSota = effectiveStation?.sota?.trim().isNotEmpty == true;
-        final showWwff = effectiveStation?.wwff?.trim().isNotEmpty == true;
-        if (!showPota && !showSota && !showWwff) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        final effectiveStation = _effectiveStation;
+        final stationHasRef = [
+          effectiveStation?.pota,
+          effectiveStation?.sota,
+          effectiveStation?.wwff,
+        ].any((r) => r?.trim().isNotEmpty == true);
+        final hasRef = _potaRefs.isNotEmpty ||
+            _sotaRefCtrl.text.trim().isNotEmpty ||
+            _wwffRefCtrl.text.trim().isNotEmpty;
+        return ExpansionTile(
+          // A new key when the station gains or loses a reference of its own,
+          // so switching to a park location unfolds it (initiallyExpanded is
+          // only read when the tile is first built).
+          key: ValueKey(stationHasRef),
+          title: Text(context.l10n.qsoReferencesSection),
+          leading: const Icon(Icons.park_outlined),
+          initiallyExpanded: stationHasRef || hasRef,
+          maintainState: true,
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: const EdgeInsets.only(bottom: 4),
+          shape: const Border(),
+          collapsedShape: const Border(),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 12),
-            if (showPota) ...[
+            ...[
               if (_potaRefs.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 48, bottom: 4),
@@ -1460,19 +1583,38 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                     ],
                   ),
                 ),
-              TextFormField(
+              PotaParkAutocomplete(
                 controller: _potaInputCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'POTA P2P',
-                  hintText: 'US-1234, Enter veya virgülle ekle',
-                  prefixIcon: Icon(Icons.park_outlined, size: 20),
+                focusNode: _potaInputFocus,
+                onSelected: _onPotaParkSelected,
+                fieldBuilder: (context, selectHighlighted) => TextFormField(
+                  controller: _potaInputCtrl,
+                  focusNode: _potaInputFocus,
+                  textInputAction: TextInputAction.done,
+                  // Enter adds the park and stays here for another one.
+                  onEditingComplete: () {},
+                  decoration: InputDecoration(
+                    labelText: 'POTA',
+                    hintText: context.l10n.potaRefHint,
+                    prefixIcon: const Icon(Icons.park_outlined, size: 20),
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                  onFieldSubmitted: (value) {
+                    final r = value.trim().toUpperCase();
+                    // Enter on an empty field ends the Enter chain: save.
+                    if (r.isEmpty) {
+                      _submit();
+                      return;
+                    }
+                    if (!potaRefPattern.hasMatch(r)) {
+                      // A name being searched: take the top suggestion.
+                      selectHighlighted();
+                      return;
+                    }
+                    _potaInputCtrl.clear();
+                    _addPotaRef(r);
+                  },
                 ),
-                textCapitalization: TextCapitalization.characters,
-                onFieldSubmitted: (value) {
-                  final r = value.trim().toUpperCase();
-                  _potaInputCtrl.clear();
-                  if (r.isNotEmpty) _addPotaRef(r);
-                },
               ),
               if (_potaRefs.isNotEmpty)
                 Padding(
@@ -1528,24 +1670,30 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                   ),
                 ),
             ],
-            if (showSota) ...[
-              if (showPota) const SizedBox(height: 12),
+            ...[
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _sotaRefCtrl,
+                focusNode: _sotaRefFocus,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
                 decoration: const InputDecoration(
-                  labelText: 'SOTA P2P',
+                  labelText: 'SOTA',
                   hintText: 'SP/KR-001',
                   prefixIcon: Icon(Icons.terrain_outlined, size: 20),
                 ),
                 textCapitalization: TextCapitalization.characters,
               ),
             ],
-            if (showWwff) ...[
-              if (showPota || showSota) const SizedBox(height: 12),
+            ...[
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _wwffRefCtrl,
+                focusNode: _wwffRefFocus,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
                 decoration: const InputDecoration(
-                  labelText: 'WWFF P2P',
+                  labelText: 'WWFF',
                   hintText: 'SPFF-0001, TAFF-0001',
                   prefixIcon: Icon(Icons.forest_outlined, size: 20),
                 ),
@@ -2399,6 +2547,56 @@ class _HistoryBadge extends StatelessWidget {
 }
 
 // ── Inline previous QSOs (phone layout only) ──────────────────────────────────
+
+/// Logging from a park: how many QSOs it has today (UTC) toward the
+/// [kPotaActivationQsos] a valid activation needs, one chip per park.
+class _PotaActivationBadge extends ConsumerWidget {
+  final StationModel station;
+  const _PotaActivationBadge({required this.station});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final log = ref.watch(qsoProvider).valueOrNull;
+    if (log == null) return const SizedBox.shrink();
+    final stationPotaRefs = <int, String>{
+      for (final s in ref.watch(stationProvider).valueOrNull ?? <StationModel>[])
+        if (s.pota?.trim().isNotEmpty == true) s.id: s.pota!,
+      station.id: station.pota!,
+    };
+    final now = DateTime.now().toUtc();
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(spacing: 6, runSpacing: 6, children: [
+        for (final park in potaRefsOf(station.pota))
+          Builder(builder: (context) {
+            final n = potaActivationCount(
+                log: log,
+                park: park,
+                stationPotaRefs: stationPotaRefs,
+                day: now);
+            final done = n >= kPotaActivationQsos;
+            final cs = Theme.of(context).colorScheme;
+            final fg = done ? Colors.white : cs.onSecondaryContainer;
+            return Chip(
+              avatar: Icon(done ? Icons.check_circle : Icons.park,
+                  size: 16, color: fg),
+              label: Text(
+                  done
+                      ? l10n.potaActivationDone(park, n)
+                      : l10n.potaActivationProgress(
+                          park, n, kPotaActivationQsos),
+                  style: TextStyle(color: fg, fontWeight: FontWeight.w600)),
+              backgroundColor:
+                  done ? Colors.green.shade700 : cs.secondaryContainer,
+              side: BorderSide.none,
+              visualDensity: VisualDensity.compact,
+            );
+          }),
+      ]),
+    );
+  }
+}
 
 /// Chips under the callsign: a new DXCC entity, a new band or mode for it,
 /// or a dupe (same call, band and mode already logged today), checked
