@@ -9,6 +9,7 @@ import '../../../data/models/dxcc_entity_model.dart';
 import '../../../data/models/state_subdivision_model.dart';
 import '../../../data/models/station_model.dart';
 import '../../../providers/station_provider.dart';
+import '../../widgets/pota/pota_park_autocomplete.dart';
 
 class CreateStationScreen extends ConsumerStatefulWidget {
   final StationModel? existingStation;
@@ -53,6 +54,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
   final _sotaCtrl    = TextEditingController();
   final _wwffCtrl    = TextEditingController();
   final _potaCtrl    = TextEditingController();
+  final _potaFocus   = FocusNode();
   final _sigCtrl     = TextEditingController();
   final _sigInfoCtrl = TextEditingController();
 
@@ -184,6 +186,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
     _sotaCtrl.dispose();
     _wwffCtrl.dispose();
     _potaCtrl.dispose();
+    _potaFocus.dispose();
     _sigCtrl.dispose();
     _sigInfoCtrl.dispose();
     _eqslNickCtrl.dispose();
@@ -473,11 +476,18 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextFormField(
+                // Find the park being activated by name, too.
+                child: PotaParkAutocomplete(
                   controller: _potaCtrl,
-                  decoration: InputDecoration(
-                      labelText: l10n.pota, hintText: 'TA-0001'),
-                  textCapitalization: TextCapitalization.characters,
+                  focusNode: _potaFocus,
+                  onSelected: (_) {}, // the field now holds its reference
+                  fieldBuilder: (context, _) => TextFormField(
+                    controller: _potaCtrl,
+                    focusNode: _potaFocus,
+                    decoration: InputDecoration(
+                        labelText: l10n.pota, hintText: 'TA-0001'),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
                 ),
               ),
             ]),

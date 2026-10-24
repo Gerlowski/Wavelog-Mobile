@@ -2407,4 +2407,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get potaRefHint => 'PL-0123, kolejny park: Enter lub przecinek';
+
+  @override
+  String get potaUnknownParkTitle => 'Nieznany park';
+
+  @override
+  String potaUnknownParkBody(String refs) {
+    return 'W bazie pota.app nie ma parku $refs. Zapisać QSO mimo to?';
+  }
 }

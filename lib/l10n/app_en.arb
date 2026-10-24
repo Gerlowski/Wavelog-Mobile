@@ -1612,5 +1612,9 @@
   "qsoReferencesSection": "POTA / SOTA / WWFF",
   "@qsoReferencesSection": {"description": "QSO form section for the other station's park, summit or WWFF area"},
   "potaRefHint": "US-1234, add more with Enter or a comma",
-  "@potaRefHint": {"description": "Hint of the QSO form POTA park field"}
+  "@potaRefHint": {"description": "Hint of the QSO form POTA park field"},
+  "potaUnknownParkTitle": "Unknown park",
+  "@potaUnknownParkTitle": {"description": "Title of the dialog shown before saving a QSO with a POTA park pota.app does not know"},
+  "potaUnknownParkBody": "pota.app has no park {refs}. Save the QSO anyway?",
+  "@potaUnknownParkBody": {"placeholders": {"refs": {"type": "String"}}}
 }

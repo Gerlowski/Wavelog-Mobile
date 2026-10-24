@@ -4623,6 +4623,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'US-1234, add more with Enter or a comma'**
   String get potaRefHint;
+
+  /// Title of the dialog shown before saving a QSO with a POTA park pota.app does not know
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown park'**
+  String get potaUnknownParkTitle;
+
+  /// No description provided for @potaUnknownParkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'pota.app has no park {refs}. Save the QSO anyway?'**
+  String potaUnknownParkBody(String refs);
 }
 
 class _AppLocalizationsDelegate
