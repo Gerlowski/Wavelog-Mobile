@@ -56,7 +56,6 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
 
   // eQSL
   final _eqslNickCtrl = TextEditingController();
-  final _eqslMsgCtrl  = TextEditingController();
 
   // Integrations
   final _qrzApiKeyCtrl     = TextEditingController();
@@ -102,7 +101,6 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
       _sigCtrl.text           = s.sig ?? '';
       _sigInfoCtrl.text       = s.sigInfo ?? '';
       _eqslNickCtrl.text      = s.eqslQthNickname ?? '';
-      _eqslMsgCtrl.text       = s.eqslDefaultQslMsg ?? '';
       _qrzApiKeyCtrl.text     = s.qrzApiKey ?? '';
       _hrdlogUserCtrl.text    = s.hrdlogUsername ?? '';
       _hrdlogCodeCtrl.text    = s.hrdlogCode ?? '';
@@ -211,7 +209,6 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
     _sigCtrl.dispose();
     _sigInfoCtrl.dispose();
     _eqslNickCtrl.dispose();
-    _eqslMsgCtrl.dispose();
     _qrzApiKeyCtrl.dispose();
     _hrdlogUserCtrl.dispose();
     _hrdlogCodeCtrl.dispose();
@@ -246,7 +243,8 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
         sig: _t(_sigCtrl),
         sigInfo: _t(_sigInfoCtrl),
         eqslQthNickname: _t(_eqslNickCtrl),
-        eqslDefaultQslMsg: _t(_eqslMsgCtrl),
+        // Not exposed by the v2 API, set in Wavelog's web UI: kept as is.
+        eqslDefaultQslMsg: widget.existingStation?.eqslDefaultQslMsg,
         qrzApiKey: _t(_qrzApiKeyCtrl),
         hrdlogUsername: _t(_hrdlogUserCtrl),
         hrdlogCode: _t(_hrdlogCodeCtrl),
@@ -560,12 +558,6 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
               controller: _eqslNickCtrl,
               decoration:
                   InputDecoration(labelText: l10n.eqslQthNicknameLabel),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _eqslMsgCtrl,
-              decoration: InputDecoration(labelText: l10n.eqslDefaultMsgLabel),
-              maxLines: 2,
             ),
 
             const SizedBox(height: 24),

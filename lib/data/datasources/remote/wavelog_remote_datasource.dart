@@ -920,6 +920,11 @@ class WavelogRemoteDatasource {
     if (s.sig != null && s.sig!.isNotEmpty) body['sig'] = s.sig;
     if (s.sigInfo != null && s.sigInfo!.isNotEmpty) body['sig_info'] = s.sigInfo;
     if (s.power != null) body['power'] = s.power;
+    // Only when set: an empty nickname switches the station's eQSL upload
+    // off, and a Wavelog older than this API field would read back nothing.
+    if (s.eqslQthNickname != null && s.eqslQthNickname!.isNotEmpty) {
+      body['eqsl_qth_nickname'] = s.eqslQthNickname;
+    }
     return body;
   }
 
