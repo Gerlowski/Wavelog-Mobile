@@ -4605,6 +4605,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dupe: already worked today on {band} {mode}'**
   String workedDupe(String band, String mode);
+
+  /// QSO form section for the other station's park, summit or WWFF area
+  ///
+  /// In en, this message translates to:
+  /// **'POTA / SOTA / WWFF'**
+  String get qsoReferencesSection;
+
+  /// Hint of the QSO form POTA park field
+  ///
+  /// In en, this message translates to:
+  /// **'US-1234, add more with Enter or a comma'**
+  String get potaRefHint;
+
+  /// Title of the dialog shown before saving a QSO with a POTA park pota.app does not know
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown park'**
+  String get potaUnknownParkTitle;
+
+  /// No description provided for @potaUnknownParkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'pota.app has no park {refs}. Save the QSO anyway?'**
+  String potaUnknownParkBody(String refs);
+
+  /// Badge on a POTA spot whose park is not in the log yet
+  ///
+  /// In en, this message translates to:
+  /// **'New park'**
+  String get spotNewPark;
+
+  /// No description provided for @potaActivationProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{park}: {count}/{needed} QSOs today (UTC)'**
+  String potaActivationProgress(String park, int count, int needed);
+
+  /// No description provided for @potaActivationDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{park}: activated ({count} QSOs today)'**
+  String potaActivationDone(String park, int count);
 }
 
 class _AppLocalizationsDelegate
