@@ -2397,4 +2397,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String workedDupe(String band, String mode) {
     return 'Duplikat: dziś już było na $band $mode';
   }
+
+  @override
+  String get qsoReferencesSection => 'POTA / SOTA / WWFF';
+
+  @override
+  String get potaRefHint => 'PL-0123, kolejny park: Enter lub przecinek';
 }

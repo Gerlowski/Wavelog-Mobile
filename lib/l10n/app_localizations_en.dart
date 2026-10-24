@@ -2390,4 +2390,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String workedDupe(String band, String mode) {
     return 'Dupe: already worked today on $band $mode';
   }
+
+  @override
+  String get qsoReferencesSection => 'POTA / SOTA / WWFF';
+
+  @override
+  String get potaRefHint => 'US-1234, add more with Enter or a comma';
 }

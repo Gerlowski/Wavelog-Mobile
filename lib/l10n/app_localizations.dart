@@ -4605,6 +4605,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dupe: already worked today on {band} {mode}'**
   String workedDupe(String band, String mode);
+
+  /// QSO form section for the other station's park, summit or WWFF area
+  ///
+  /// In en, this message translates to:
+  /// **'POTA / SOTA / WWFF'**
+  String get qsoReferencesSection;
+
+  /// Hint of the QSO form POTA park field
+  ///
+  /// In en, this message translates to:
+  /// **'US-1234, add more with Enter or a comma'**
+  String get potaRefHint;
 }
 
 class _AppLocalizationsDelegate

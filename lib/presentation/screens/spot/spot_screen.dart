@@ -343,11 +343,16 @@ String _formatAge(DateTime dt) {
 /// Navigates to the QSO form, prefilled from a tapped spot. Frequency is
 /// always passed on; mode only when it's a recognised value — otherwise the
 /// user picks it themselves on the form (many spots, SOTA especially, don't
-/// report a mode at all).
+/// report a mode at all). The activator's POTA / SOTA / WWFF reference goes
+/// along too, so a hunted park, summit or area is logged with the QSO.
 void _goLogSpot(BuildContext context, _SpotView spot) {
   final params = <String, String>{'callsign': spot.activator};
   if (spot.freqMhzForLog != null) params['freq'] = spot.freqMhzForLog!;
   if (spot.modeForLog != null) params['mode'] = spot.modeForLog!;
+  final ref = spot.refForLog;
+  if (ref != null && ref.ref.trim().isNotEmpty) {
+    params[ref.key] = ref.ref.trim().toUpperCase();
+  }
   context.push(Uri(path: '/add-qso', queryParameters: params).toString());
 }
 
@@ -387,6 +392,10 @@ class _SpotView {
   /// which case this stays null and the user picks it manually on the form.
   final String? modeForLog;
 
+  /// The activator's reference for the QSO form, under its query key
+  /// ('pota' / 'sota' / 'wwff'); null for DX spots.
+  final ({String key, String ref})? refForLog;
+
   const _SpotView({
     required this.activator,
     required this.mode,
@@ -399,6 +408,7 @@ class _SpotView {
     required this.time,
     this.freqMhzForLog,
     this.modeForLog,
+    this.refForLog,
   });
 }
 
@@ -785,6 +795,7 @@ class _PotaSpotContent extends ConsumerWidget {
                       band: s.band,
                       freqDisplay: s.freqDisplay,
                       refIcon: Icons.park_outlined,
+                      refForLog: (key: 'pota', ref: s.reference),
                       refLine: s.parkName.isNotEmpty
                           ? '${s.reference}  ${s.parkName}'
                           : s.reference,
@@ -860,6 +871,7 @@ class _SotaSpotContent extends ConsumerWidget {
                       band: s.band,
                       freqDisplay: s.freqDisplay,
                       refIcon: Icons.terrain_outlined,
+                      refForLog: (key: 'sota', ref: s.reference),
                       refLine: s.summitDetails.isNotEmpty
                           ? '${s.reference}  ${s.summitDetails}'
                           : s.reference,
@@ -934,6 +946,7 @@ class _WwffSpotContent extends ConsumerWidget {
                       band: s.band,
                       freqDisplay: s.freqDisplay,
                       refIcon: Icons.eco_outlined,
+                      refForLog: (key: 'wwff', ref: s.reference),
                       refLine: s.referenceName.isNotEmpty
                           ? '${s.reference}  ${s.referenceName}'
                           : s.reference,

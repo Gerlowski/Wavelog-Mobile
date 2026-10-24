@@ -835,5 +835,7 @@
   "workedNewCountry": "Nowy kraj",
   "workedNewBand": "Nowe pasmo ({band})",
   "workedNewMode": "Nowy tryb ({mode})",
-  "workedDupe": "Duplikat: dziś już było na {band} {mode}"
+  "workedDupe": "Duplikat: dziś już było na {band} {mode}",
+  "qsoReferencesSection": "POTA / SOTA / WWFF",
+  "potaRefHint": "PL-0123, kolejny park: Enter lub przecinek"
 }

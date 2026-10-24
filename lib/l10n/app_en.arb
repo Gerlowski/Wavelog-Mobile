@@ -1606,5 +1606,9 @@
   "workedNewMode": "New mode ({mode})",
   "@workedNewMode": {"placeholders": {"mode": {"type": "String"}}},
   "workedDupe": "Dupe: already worked today on {band} {mode}",
-  "@workedDupe": {"placeholders": {"band": {"type": "String"}, "mode": {"type": "String"}}}
+  "@workedDupe": {"placeholders": {"band": {"type": "String"}, "mode": {"type": "String"}}},
+  "qsoReferencesSection": "POTA / SOTA / WWFF",
+  "@qsoReferencesSection": {"description": "QSO form section for the other station's park, summit or WWFF area"},
+  "potaRefHint": "US-1234, add more with Enter or a comma",
+  "@potaRefHint": {"description": "Hint of the QSO form POTA park field"}
 }
