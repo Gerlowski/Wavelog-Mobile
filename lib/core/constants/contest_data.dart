@@ -210,6 +210,17 @@ ContestZone? contestZoneOf(String adifName) {
   return null;
 }
 
+/// The OPERATOR for a contest QSO: the account's callsign, else the
+/// station's without a prefix or suffix (SP4BL/P -> SP4BL), as Wavelog
+/// checks it against the account's callsign.
+String? contestOperator(String? accountCallsign, String? stationCallsign) {
+  final account = accountCallsign?.trim().toUpperCase() ?? '';
+  if (account.isNotEmpty) return account;
+  final parts = (stationCallsign ?? '').trim().toUpperCase().split('/')
+    ..sort((a, b) => b.length.compareTo(a.length));
+  return parts.first.isEmpty ? null : parts.first;
+}
+
 /// The default exchange fields for a new session of [adifName].
 List<String> defaultExchangeFields(String adifName) =>
     contestZoneOf(adifName) != null ? const ['exchange'] : const ['serial'];
