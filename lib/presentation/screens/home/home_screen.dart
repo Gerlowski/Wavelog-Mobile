@@ -10,6 +10,7 @@ import '../../../providers/qso_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/statistics_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../widgets/station/station_switcher_sheet.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/offline_banner.dart';
 import '../../widgets/common/qso_sync_progress_banner.dart';
@@ -115,7 +116,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: ActionChip(
                 avatar: const Icon(Icons.cell_tower, size: 16),
                 label: Text(settings.activeStationCallsign!),
-                onPressed: () => context.push('/stations'),
+                onPressed: () => showStationSwitcher(context),
               ),
             ),
           IconButton(

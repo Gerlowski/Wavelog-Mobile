@@ -31,6 +31,16 @@ class StationNotifier extends AsyncNotifier<List<StationModel>> {
     return stations;
   }
 
+  /// Makes [station] the active location: at once locally, then on the
+  /// server in the background (failures ignored, so it works offline too).
+  Future<void> activate(StationModel station) async {
+    await ref.read(settingsProvider.notifier).setActiveStation(station);
+    ref
+        .read(wavelogRemoteDatasourceProvider)
+        .setActiveStation(station.id)
+        .catchError((_) {});
+  }
+
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_fetchStations);
