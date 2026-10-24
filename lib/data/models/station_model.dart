@@ -108,7 +108,10 @@ class StationModel {
       pota: (isV2Format ? json['pota'] : json['station_pota'])?.toString(),
       sig: (isV2Format ? json['sig'] : json['station_sig'])?.toString(),
       sigInfo: (isV2Format ? json['sig_info'] : json['station_sig_info'])?.toString(),
-      eqslQthNickname: json['eqslqthnickname']?.toString(),
+      // v2 API key; the column name is the legacy API's.
+      eqslQthNickname: (json['eqsl_qth_nickname'] ??
+              json['eqslqthnickname'])
+          ?.toString(),
       eqslDefaultQslMsg: json['eqsl_default_qslmsg']?.toString(),
       qrzApiKey: json['qrzapikey']?.toString() ?? json['qrz_api']?.toString(),
       hrdlogUsername: json['hrdlog_username']?.toString(),
