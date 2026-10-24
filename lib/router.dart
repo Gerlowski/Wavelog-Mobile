@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'core/utils/l10n_extension.dart';
 import 'core/utils/maidenhead.dart';
+import 'presentation/widgets/station/station_switcher_sheet.dart';
 import 'presentation/screens/achievements/achievements_screen.dart';
 import 'presentation/screens/antenna/antenna_compass_screen.dart';
 import 'providers/pending_sync_provider.dart';
@@ -528,20 +529,42 @@ class _AppDrawer extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  settings.activeStationCallsign ?? 'Wavelog Mobile',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: cs.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
+                // Tap the active station to switch to another location.
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => showStationSwitcher(context),
+                  child: Row(children: [
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            settings.activeStationCallsign ?? 'Wavelog Mobile',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: cs.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          if (settings.activeStationName != null)
+                            Text(
+                              settings.activeStationName!,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: cs.onPrimaryContainer
+                                        .withValues(alpha: 0.75),
+                                  ),
+                            ),
+                        ],
                       ),
+                    ),
+                    Icon(Icons.arrow_drop_down, color: cs.onPrimaryContainer),
+                  ]),
                 ),
-                if (settings.activeStationName != null)
-                  Text(
-                    settings.activeStationName!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: cs.onPrimaryContainer.withValues(alpha: 0.75),
-                        ),
-                  ),
                 const SizedBox(height: 8),
                 const _DrawerHeaderInfo(),
               ],
