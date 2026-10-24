@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wavelog_mobile/data/datasources/remote/wavelog_remote_datasource.dart';
 import 'package:wavelog_mobile/data/models/callsign_lookup_model.dart';
+import 'package:wavelog_mobile/data/models/qso_model.dart';
 import 'package:wavelog_mobile/data/models/station_model.dart';
 import 'package:wavelog_mobile/l10n/app_localizations.dart';
 import 'package:wavelog_mobile/presentation/screens/qso/add_qso_screen.dart';
@@ -30,9 +31,18 @@ class _OneStation extends StationNotifier {
   Future<List<StationModel>> build() async => [station];
 }
 
+/// The log without the network.
+class _Log extends QsoNotifier {
+  final List<QsoModel> qsos;
+  _Log(this.qsos);
+
+  @override
+  Future<List<QsoModel>> build() async => qsos;
+}
+
 void main() {
   Future<void> pumpForm(WidgetTester tester, AddQsoScreen screen,
-      {StationModel? station}) async {
+      {StationModel? station, List<QsoModel>? log}) async {
     SharedPreferences.setMockInitialValues({});
     // Tall phone-sized surface, so the whole form lays out.
     tester.view.physicalSize = const Size(1200, 3200);
@@ -44,6 +54,7 @@ void main() {
         scopedQsoProvider.overrideWithValue(const AsyncValue.data([])),
         if (station != null)
           stationProvider.overrideWith(() => _OneStation(station)),
+        if (log != null) qsoProvider.overrideWith(() => _Log(log)),
       ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -123,6 +134,36 @@ void main() {
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pump();
     expect(find.widgetWithText(InputChip, 'PL-0341'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('logging from a park shows its activation progress today',
+      (tester) async {
+    QsoModel logged(DateTime at) => QsoModel(
+          callsign: 'SP1ABC',
+          dateTimeOn: at,
+          band: '40m',
+          mode: 'SSB',
+          rstSent: '59',
+          rstRcvd: '59',
+          stationProfileId: 7,
+        );
+    final now = DateTime.now().toUtc();
+    await pumpForm(tester, const AddQsoScreen(),
+        station: const StationModel(
+            id: 7,
+            profileName: 'Teren1',
+            callsign: 'SP4BL/P',
+            pota: 'PL-0341',
+            isActive: true),
+        log: [
+          logged(now),
+          logged(now),
+          logged(now),
+          logged(now.subtract(const Duration(days: 2))),
+        ]);
+    await tester.pump();
+    expect(find.text('PL-0341: 3/10 QSOs today (UTC)'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
   });
 }

@@ -2411,4 +2411,17 @@ class AppLocalizationsPl extends AppLocalizations {
   String potaUnknownParkBody(String refs) {
     return 'W bazie pota.app nie ma parku $refs. Zapisać QSO mimo to?';
   }
+
+  @override
+  String get spotNewPark => 'Nowy park';
+
+  @override
+  String potaActivationProgress(String park, int count, int needed) {
+    return '$park: $count/$needed QSO dziś (UTC)';
+  }
+
+  @override
+  String potaActivationDone(String park, int count) {
+    return '$park: aktywacja zaliczona ($count QSO dziś)';
+  }
 }

@@ -15,6 +15,7 @@ import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/pota_activity.dart';
 import '../../../core/utils/worked_before.dart';
 import '../../../data/models/callsign_lookup_model.dart';
 import '../../../data/models/qso_model.dart';
@@ -1303,6 +1304,11 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       ),
       const SizedBox(height: 8),
 
+      // ── POTA activation progress, logging from a park ──────────────
+      if (widget.editQso == null &&
+          _effectiveStation?.pota?.trim().isNotEmpty == true)
+        _PotaActivationBadge(station: _effectiveStation!),
+
       // ── New country / band / mode, dupe ─────────────────────────────
       if (widget.editQso == null && _currentCallsign.length >= 3)
         _WorkedBeforeBadges(
@@ -2541,6 +2547,56 @@ class _HistoryBadge extends StatelessWidget {
 }
 
 // ── Inline previous QSOs (phone layout only) ──────────────────────────────────
+
+/// Logging from a park: how many QSOs it has today (UTC) toward the
+/// [kPotaActivationQsos] a valid activation needs, one chip per park.
+class _PotaActivationBadge extends ConsumerWidget {
+  final StationModel station;
+  const _PotaActivationBadge({required this.station});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final log = ref.watch(qsoProvider).valueOrNull;
+    if (log == null) return const SizedBox.shrink();
+    final stationPotaRefs = <int, String>{
+      for (final s in ref.watch(stationProvider).valueOrNull ?? <StationModel>[])
+        if (s.pota?.trim().isNotEmpty == true) s.id: s.pota!,
+      station.id: station.pota!,
+    };
+    final now = DateTime.now().toUtc();
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(spacing: 6, runSpacing: 6, children: [
+        for (final park in potaRefsOf(station.pota))
+          Builder(builder: (context) {
+            final n = potaActivationCount(
+                log: log,
+                park: park,
+                stationPotaRefs: stationPotaRefs,
+                day: now);
+            final done = n >= kPotaActivationQsos;
+            final cs = Theme.of(context).colorScheme;
+            final fg = done ? Colors.white : cs.onSecondaryContainer;
+            return Chip(
+              avatar: Icon(done ? Icons.check_circle : Icons.park,
+                  size: 16, color: fg),
+              label: Text(
+                  done
+                      ? l10n.potaActivationDone(park, n)
+                      : l10n.potaActivationProgress(
+                          park, n, kPotaActivationQsos),
+                  style: TextStyle(color: fg, fontWeight: FontWeight.w600)),
+              backgroundColor:
+                  done ? Colors.green.shade700 : cs.secondaryContainer,
+              side: BorderSide.none,
+              visualDensity: VisualDensity.compact,
+            );
+          }),
+      ]),
+    );
+  }
+}
 
 /// Chips under the callsign: a new DXCC entity, a new band or mode for it,
 /// or a dupe (same call, band and mode already logged today), checked
