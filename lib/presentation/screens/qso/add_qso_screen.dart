@@ -100,6 +100,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   late FocusNode _rstRcvdFocus;
   final _freqFocus = FocusNode();
   final _rstSentFocus = FocusNode();
+  final _potaInputFocus = FocusNode();
+  final _sotaRefFocus = FocusNode();
+  final _wwffRefFocus = FocusNode();
   // When the last hardware Enter went down: tells a hardware-keyboard Enter
   // on the callsign (save, issue #48) from an on-screen keyboard one (walk
   // to the report), see _onCallsignSubmitted.
@@ -315,6 +318,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _rstRcvdFocus.dispose();
     _freqFocus.dispose();
     _rstSentFocus.dispose();
+    _potaInputFocus.dispose();
+    _sotaRefFocus.dispose();
+    _wwffRefFocus.dispose();
     HardwareKeyboard.instance.removeHandler(_noteHardwareEnter);
     _callsignCtrl.dispose();
     _freqCtrl.dispose();
@@ -696,20 +702,44 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     });
   }
 
+  /// The station the QSO is logged for: explicit selection → settings ID →
+  /// first active station in the loaded list (handles a stale or null
+  /// activeStationProfileId).
+  StationModel? get _effectiveStation {
+    final stationList = ref.read(stationProvider).valueOrNull ?? [];
+    final settingStationId = ref.read(settingsProvider).activeStationProfileId;
+    return _selectedStation
+        ?? stationList.where((s) => s.id == settingStationId).firstOrNull
+        ?? stationList.where((s) => s.isActive).firstOrNull
+        ?? stationList.firstOrNull;
+  }
+
+  /// Enter on RST rcvd. Logging from a park, summit or WWFF area, the chain
+  /// stops at that kind of reference field first, so a park-to-park contact
+  /// isn't saved before its reference is typed (Enter there on an empty
+  /// field saves); everywhere else, or with the reference already filled
+  /// in, it saves straight away.
+  void _afterReport() {
+    final s = _effectiveStation;
+    bool has(String? r) => r?.trim().isNotEmpty == true;
+    if (has(s?.pota) && _potaRefs.isEmpty) {
+      _focusAndSelect(_potaInputFocus, _potaInputCtrl);
+    } else if (has(s?.sota) && _sotaRefCtrl.text.trim().isEmpty) {
+      _focusAndSelect(_sotaRefFocus, _sotaRefCtrl);
+    } else if (has(s?.wwff) && _wwffRefCtrl.text.trim().isEmpty) {
+      _focusAndSelect(_wwffRefFocus, _wwffRefCtrl);
+    } else {
+      _submit();
+    }
+  }
+
   Future<void> _submit() async {
     // Enter can reach here twice for one press (the hardware shortcut and
     // the field's submit action), never save the QSO twice.
     if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
 
-    // Resolve the effective station: explicit selection → settings ID → first
-    // active station in the loaded list (handles stale or null activeStationProfileId).
-    final stationList = ref.read(stationProvider).valueOrNull ?? [];
-    final settingStationId = ref.read(settingsProvider).activeStationProfileId;
-    final effectiveStation = _selectedStation
-        ?? stationList.where((s) => s.id == settingStationId).firstOrNull
-        ?? stationList.where((s) => s.isActive).firstOrNull
-        ?? stationList.firstOrNull;
+    final effectiveStation = _effectiveStation;
     final stationId = effectiveStation?.id;
     if (stationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1347,7 +1377,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             decoration: InputDecoration(labelText: l10n.rstRcvdField),
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _submit(),
+            onFieldSubmitted: (_) => _afterReport(),
             validator: (v) => validateRst(v, _mode),
           ),
         ),
@@ -1443,13 +1473,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       // folded away unless the active station is itself in a park, summit
       // or WWFF area, or a reference is already filled in (e.g. from a spot).
       Builder(builder: (context) {
-        final stationList = stations.valueOrNull ?? [];
-        final settingStationId =
-            ref.read(settingsProvider).activeStationProfileId;
-        final effectiveStation = _selectedStation
-            ?? stationList.where((s) => s.id == settingStationId).firstOrNull
-            ?? stationList.where((s) => s.isActive).firstOrNull
-            ?? stationList.firstOrNull;
+        final effectiveStation = _effectiveStation;
         final stationHasRef = [
           effectiveStation?.pota,
           effectiveStation?.sota,
@@ -1459,6 +1483,10 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             _sotaRefCtrl.text.trim().isNotEmpty ||
             _wwffRefCtrl.text.trim().isNotEmpty;
         return ExpansionTile(
+          // A new key when the station gains or loses a reference of its own,
+          // so switching to a park location unfolds it (initiallyExpanded is
+          // only read when the tile is first built).
+          key: ValueKey(stationHasRef),
           title: Text(context.l10n.qsoReferencesSection),
           leading: const Icon(Icons.park_outlined),
           initiallyExpanded: stationHasRef || hasRef,
@@ -1496,6 +1524,10 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                 ),
               TextFormField(
                 controller: _potaInputCtrl,
+                focusNode: _potaInputFocus,
+                textInputAction: TextInputAction.done,
+                // Enter adds the park and stays here for another one.
+                onEditingComplete: () {},
                 decoration: InputDecoration(
                   labelText: 'POTA',
                   hintText: context.l10n.potaRefHint,
@@ -1504,8 +1536,13 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                 textCapitalization: TextCapitalization.characters,
                 onFieldSubmitted: (value) {
                   final r = value.trim().toUpperCase();
+                  // Enter on an empty field ends the Enter chain: save.
+                  if (r.isEmpty) {
+                    _submit();
+                    return;
+                  }
                   _potaInputCtrl.clear();
-                  if (r.isNotEmpty) _addPotaRef(r);
+                  _addPotaRef(r);
                 },
               ),
               if (_potaRefs.isNotEmpty)
@@ -1566,6 +1603,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _sotaRefCtrl,
+                focusNode: _sotaRefFocus,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
                 decoration: const InputDecoration(
                   labelText: 'SOTA',
                   hintText: 'SP/KR-001',
@@ -1578,6 +1618,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _wwffRefCtrl,
+                focusNode: _wwffRefFocus,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
                 decoration: const InputDecoration(
                   labelText: 'WWFF',
                   hintText: 'SPFF-0001, TAFF-0001',
