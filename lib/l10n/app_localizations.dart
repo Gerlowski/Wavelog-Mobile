@@ -4647,6 +4647,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{park}: activated ({count} QSOs today)'**
   String potaActivationDone(String park, int count);
+
+  /// No description provided for @contestDupe.
+  ///
+  /// In en, this message translates to:
+  /// **'DUPE: already in this contest on {band} ({time} UTC)'**
+  String contestDupe(String band, String time);
+
+  /// No description provided for @contestWorkedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'In this contest on: {bands}'**
+  String contestWorkedOn(String bands);
 }
 
 class _AppLocalizationsDelegate
