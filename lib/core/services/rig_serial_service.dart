@@ -6,11 +6,19 @@ class RigUsbDevice {
   final int deviceId;
   final String name;
   final String driver;
+  final int vendorId;
+  final int productId;
+
+  /// Whether Android already lets the app open it without asking.
+  final bool hasPermission;
 
   const RigUsbDevice({
     required this.deviceId,
     required this.name,
     required this.driver,
+    required this.vendorId,
+    required this.productId,
+    required this.hasPermission,
   });
 }
 
@@ -28,8 +36,19 @@ class RigSerialService {
           deviceId: d['deviceId'] as int,
           name: d['name'] as String,
           driver: d['driver'] as String,
+          vendorId: d['vendorId'] as int,
+          productId: d['productId'] as int,
+          hasPermission: d['hasPermission'] as bool,
         ),
     ];
+  }
+
+  /// Called when a USB serial device is plugged in and Android hands it to
+  /// the app (the device filter in AndroidManifest.xml), permission granted.
+  void setOnDeviceAttached(void Function() onAttached) {
+    _ch.setMethodCallHandler((call) async {
+      if (call.method == 'deviceAttached') onAttached();
+    });
   }
 
   /// Opens the device at [baudRate], 8N2. Asks the user for USB permission

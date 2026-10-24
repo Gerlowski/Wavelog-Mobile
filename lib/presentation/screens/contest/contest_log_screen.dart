@@ -126,6 +126,15 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
     ref.listenManual<int?>(rigProvider.select((s) => s.frequencyHz), (_, hz) {
       if (hz != null) _freqCtrl.text = formatRigFreqMhz(hz);
     });
+    // …and its mode, unless the log is on a digital mode run in USB/LSB.
+    void applyRigMode(RigMode? m) {
+      if (m != null && m.appliesTo(_mode) && m.appMode != _mode) {
+        setState(() => _mode = m.appMode);
+      }
+    }
+    applyRigMode(ref.read(rigProvider).mode);
+    ref.listenManual<RigMode?>(
+        rigProvider.select((s) => s.mode), (_, m) => applyRigMode(m));
     _callsignFocus.addListener(_onCallsignFocusChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_session == null && _contestId.isEmpty) {

@@ -201,6 +201,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
           (_, hz) {
         if (hz != null) _freqCtrl.text = formatRigFreqMhz(hz);
       });
+      ref.listenManual<RigMode?>(rigProvider.select((s) => s.mode), (_, m) {
+        if (m != null) _applyRigMode(m);
+      });
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -223,6 +226,8 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             _loadLastBand();
             _loadLastFreq();
           }
+          final rigMode = ref.read(rigProvider).mode;
+          if (rigMode != null) _applyRigMode(rigMode);
         }
         _loadLastSubmode(_band, _mode);
       }
@@ -408,10 +413,27 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final ds = ref.read(settingsLocalDatasourceProvider);
     final saved = await ds.getLastSubmode(band, mode);
     if (!mounted) return;
+    // The sideband the radio is actually on beats any remembered one.
+    final rigMode = widget.editQso == null ? ref.read(rigProvider).mode : null;
+    if (rigMode != null && rigMode.appMode == mode && rigMode.appSubmode != null) {
+      setState(() => _submode = rigMode.appSubmode);
+      return;
+    }
     final resolved = (saved != null && (kSubmodes[mode]?.contains(saved) ?? false))
         ? saved
         : defaultSubmodeFor(band, mode);
     if (resolved != null) setState(() => _submode = resolved);
+  }
+
+  /// Follows the radio's mode (CAT link, see rig_provider.dart) unless the
+  /// log is on a digital mode the radio runs in USB/LSB.
+  void _applyRigMode(RigMode m) {
+    if (!m.appliesTo(_mode)) return;
+    if (m.appMode != _mode) {
+      _onModeChanged(m.appMode);
+    } else if (m.appSubmode != null && m.appSubmode != _submode) {
+      setState(() => _submode = m.appSubmode);
+    }
   }
 
   void _onModeChanged(String mode) {

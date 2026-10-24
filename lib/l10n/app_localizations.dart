@@ -4420,6 +4420,18 @@ abstract class AppLocalizations {
   /// **'Nothing to sync'**
   String get syncNothing;
 
+  /// No description provided for @openAddQsoOnStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start on Add QSO'**
+  String get openAddQsoOnStart;
+
+  /// No description provided for @openAddQsoOnStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the QSO form right after the app starts; Back leads to Home'**
+  String get openAddQsoOnStartHint;
+
   /// No description provided for @rigSection.
   ///
   /// In en, this message translates to:
@@ -4485,6 +4497,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90'**
   String get rigCivAddressHint;
+
+  /// No description provided for @rigAutoConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect automatically'**
+  String get rigAutoConnect;
+
+  /// No description provided for @rigAutoConnectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When the radio\'s USB cable is plugged in, or the app starts with it plugged in. Tick \"Always\" in Android\'s prompt to skip it next time.'**
+  String get rigAutoConnectHint;
 
   /// No description provided for @rigDevicesLabel.
   ///
