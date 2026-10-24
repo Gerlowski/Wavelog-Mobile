@@ -4611,6 +4611,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS and the default eQSL message are set in Wavelog\'s web interface: the API does not expose them to the app.'**
   String get stationWebOnlySettingsHint;
+
+  /// QSO form section for the other station's park, summit or WWFF area
+  ///
+  /// In en, this message translates to:
+  /// **'POTA / SOTA / WWFF'**
+  String get qsoReferencesSection;
+
+  /// Hint of the QSO form POTA park field
+  ///
+  /// In en, this message translates to:
+  /// **'US-1234, add more with Enter or a comma'**
+  String get potaRefHint;
 }
 
 class _AppLocalizationsDelegate

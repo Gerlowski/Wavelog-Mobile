@@ -46,12 +46,21 @@ class AddQsoScreen extends ConsumerStatefulWidget {
   /// which case this stays null and the user picks it manually.
   final String? prefillMode;
 
+  /// Spot-tap prefill — the activator's POTA park, SOTA summit or WWFF
+  /// area, logged as the QSO's POTA_REF / SOTA_REF / WWFF_REF.
+  final String? prefillPotaRef;
+  final String? prefillSotaRef;
+  final String? prefillWwffRef;
+
   const AddQsoScreen({
     super.key,
     this.prefillCallsign,
     this.editQso,
     this.prefillFrequencyMhz,
     this.prefillMode,
+    this.prefillPotaRef,
+    this.prefillSotaRef,
+    this.prefillWwffRef,
   });
 
   @override
@@ -194,8 +203,10 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       _gridCtrl = TextEditingController();
       _commentCtrl = TextEditingController();
       _potaInputCtrl = TextEditingController();
-      _sotaRefCtrl = TextEditingController();
-      _wwffRefCtrl = TextEditingController();
+      _sotaRefCtrl = TextEditingController(text: widget.prefillSotaRef ?? '');
+      _wwffRefCtrl = TextEditingController(text: widget.prefillWwffRef ?? '');
+      final potaRef = widget.prefillPotaRef?.trim();
+      if (potaRef != null && potaRef.isNotEmpty) _potaRefs = [potaRef];
     }
 
     _callsignFocus = FocusNode();
@@ -317,6 +328,14 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _sotaRefCtrl.dispose();
     _wwffRefCtrl.dispose();
     super.dispose();
+  }
+
+  List<String> get _potaRefsWithPending {
+    final pending = _potaInputCtrl.text.trim().toUpperCase();
+    return [
+      ..._potaRefs,
+      if (pending.isNotEmpty && !_potaRefs.contains(pending)) pending,
+    ];
   }
 
   void _onPotaInputChanged() {
@@ -708,8 +727,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final rawAdifMap = <String, String>{
       ...?widget.editQso?.rawAdif,
       if (_dxccFlag != null) 'APP_WAVELOG_FLAG': _dxccFlag!,
-      if (_potaRefs.isNotEmpty)
-        'POTA_REF': _potaRefs.join(','),
+      // A park typed but not yet confirmed with Enter or a comma counts too.
+      if (_potaRefsWithPending.isNotEmpty)
+        'POTA_REF': _potaRefsWithPending.join(','),
       if (_sotaRefCtrl.text.trim().isNotEmpty)
         'SOTA_REF': _sotaRefCtrl.text.trim().toUpperCase(),
       if (_wwffRefCtrl.text.trim().isNotEmpty)
@@ -1418,7 +1438,10 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         maxLines: 2,
       ),
 
-      // ── P2P referanslar (istasyonda POTA/SOTA/WWFF varsa görünür) ───
+      // ── POTA / SOTA / WWFF references of the other station ──────────
+      // Always available (hunting a park from home as much as park-to-park),
+      // folded away unless the active station is itself in a park, summit
+      // or WWFF area, or a reference is already filled in (e.g. from a spot).
       Builder(builder: (context) {
         final stationList = stations.valueOrNull ?? [];
         final settingStationId =
@@ -1427,15 +1450,26 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             ?? stationList.where((s) => s.id == settingStationId).firstOrNull
             ?? stationList.where((s) => s.isActive).firstOrNull
             ?? stationList.firstOrNull;
-        final showPota = effectiveStation?.pota?.trim().isNotEmpty == true;
-        final showSota = effectiveStation?.sota?.trim().isNotEmpty == true;
-        final showWwff = effectiveStation?.wwff?.trim().isNotEmpty == true;
-        if (!showPota && !showSota && !showWwff) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        final stationHasRef = [
+          effectiveStation?.pota,
+          effectiveStation?.sota,
+          effectiveStation?.wwff,
+        ].any((r) => r?.trim().isNotEmpty == true);
+        final hasRef = _potaRefs.isNotEmpty ||
+            _sotaRefCtrl.text.trim().isNotEmpty ||
+            _wwffRefCtrl.text.trim().isNotEmpty;
+        return ExpansionTile(
+          title: Text(context.l10n.qsoReferencesSection),
+          leading: const Icon(Icons.park_outlined),
+          initiallyExpanded: stationHasRef || hasRef,
+          maintainState: true,
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: const EdgeInsets.only(bottom: 4),
+          shape: const Border(),
+          collapsedShape: const Border(),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 12),
-            if (showPota) ...[
+            ...[
               if (_potaRefs.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 48, bottom: 4),
@@ -1462,10 +1496,10 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                 ),
               TextFormField(
                 controller: _potaInputCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'POTA P2P',
-                  hintText: 'US-1234, Enter veya virgülle ekle',
-                  prefixIcon: Icon(Icons.park_outlined, size: 20),
+                decoration: InputDecoration(
+                  labelText: 'POTA',
+                  hintText: context.l10n.potaRefHint,
+                  prefixIcon: const Icon(Icons.park_outlined, size: 20),
                 ),
                 textCapitalization: TextCapitalization.characters,
                 onFieldSubmitted: (value) {
@@ -1528,24 +1562,24 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                   ),
                 ),
             ],
-            if (showSota) ...[
-              if (showPota) const SizedBox(height: 12),
+            ...[
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _sotaRefCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'SOTA P2P',
+                  labelText: 'SOTA',
                   hintText: 'SP/KR-001',
                   prefixIcon: Icon(Icons.terrain_outlined, size: 20),
                 ),
                 textCapitalization: TextCapitalization.characters,
               ),
             ],
-            if (showWwff) ...[
-              if (showPota || showSota) const SizedBox(height: 12),
+            ...[
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _wwffRefCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'WWFF P2P',
+                  labelText: 'WWFF',
                   hintText: 'SPFF-0001, TAFF-0001',
                   prefixIcon: Icon(Icons.forest_outlined, size: 20),
                 ),
