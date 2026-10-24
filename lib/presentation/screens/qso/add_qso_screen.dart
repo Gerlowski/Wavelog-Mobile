@@ -897,7 +897,11 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     final form = Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        // Keep the Save button above the system navigation bar: Android 15+
+        // draws apps edge-to-edge, and a ListView with its own padding does
+        // not add the bottom inset by itself.
+        padding: EdgeInsets.fromLTRB(
+            16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
         children: _buildFormContent(context),
       ),
     );
@@ -1711,7 +1715,8 @@ class _TabletInfoPanel extends ConsumerWidget {
 
     if (callsign.length < 3) {
       return ListView(
-        padding: const EdgeInsets.fromLTRB(12, 16, 16, 16),
+        padding: EdgeInsets.fromLTRB(
+            12, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
         children: [
           // ── Placeholder ──────────────────────────────────────────
           Padding(
@@ -1746,7 +1751,8 @@ class _TabletInfoPanel extends ConsumerWidget {
     final previousAsync = ref.watch(previousQsosByCallsignProvider(callsign));
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 16, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+          12, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
       children: [
         // ── Callsign header ──────────────────────────────────────────
         Row(children: [
