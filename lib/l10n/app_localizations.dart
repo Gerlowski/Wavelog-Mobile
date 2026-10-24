@@ -4635,6 +4635,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'pota.app has no park {refs}. Save the QSO anyway?'**
   String potaUnknownParkBody(String refs);
+
+  /// Badge on a POTA spot whose park is not in the log yet
+  ///
+  /// In en, this message translates to:
+  /// **'New park'**
+  String get spotNewPark;
+
+  /// No description provided for @potaActivationProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{park}: {count}/{needed} QSOs today (UTC)'**
+  String potaActivationProgress(String park, int count, int needed);
+
+  /// No description provided for @potaActivationDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{park}: activated ({count} QSOs today)'**
+  String potaActivationDone(String park, int count);
 }
 
 class _AppLocalizationsDelegate

@@ -1616,5 +1616,11 @@
   "potaUnknownParkTitle": "Unknown park",
   "@potaUnknownParkTitle": {"description": "Title of the dialog shown before saving a QSO with a POTA park pota.app does not know"},
   "potaUnknownParkBody": "pota.app has no park {refs}. Save the QSO anyway?",
-  "@potaUnknownParkBody": {"placeholders": {"refs": {"type": "String"}}}
+  "@potaUnknownParkBody": {"placeholders": {"refs": {"type": "String"}}},
+  "spotNewPark": "New park",
+  "@spotNewPark": {"description": "Badge on a POTA spot whose park is not in the log yet"},
+  "potaActivationProgress": "{park}: {count}/{needed} QSOs today (UTC)",
+  "@potaActivationProgress": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}, "needed": {"type": "int"}}},
+  "potaActivationDone": "{park}: activated ({count} QSOs today)",
+  "@potaActivationDone": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}}}
 }
