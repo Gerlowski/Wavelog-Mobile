@@ -89,6 +89,12 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   // the operator actually has to type per contact, the closest equivalent
   // this screen has to a contest logger's "exchange" field.
   late FocusNode _rstRcvdFocus;
+  final _freqFocus = FocusNode();
+  final _rstSentFocus = FocusNode();
+  // When the last hardware Enter went down: tells a hardware-keyboard Enter
+  // on the callsign (save, issue #48) from an on-screen keyboard one (walk
+  // to the report), see _onCallsignSubmitted.
+  DateTime? _hardwareEnterAt;
 
   DateTime _dateTimeOn = DateTime.now().toUtc();
   String _band = '20m';
@@ -120,6 +126,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   @override
   void initState() {
     super.initState();
+    HardwareKeyboard.instance.addHandler(_noteHardwareEnter);
     final settings = ref.read(settingsProvider);
     _band = '20m';
     _mode = settings.defaultMode;
@@ -295,6 +302,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _callsignFocus.removeListener(_onCallsignFocusChange);
     _callsignFocus.dispose();
     _rstRcvdFocus.dispose();
+    _freqFocus.dispose();
+    _rstSentFocus.dispose();
+    HardwareKeyboard.instance.removeHandler(_noteHardwareEnter);
     _callsignCtrl.dispose();
     _freqCtrl.dispose();
     _rstSentCtrl.dispose();
@@ -616,7 +626,61 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     if (_callsignFocus.hasFocus) _submit();
   }
 
+  /// Moves to the next field of the on-screen keyboard Enter chain with its
+  /// text selected, so typing replaces a default like "59" and Enter
+  /// accepts it as it is.
+  ///
+  /// The selection waits for the next frame: set together with
+  /// requestFocus() it can reach the native input connection before the
+  /// keyboard has moved to the field, which then loses focus altogether on
+  /// some devices and keyboards.
+  void _focusAndSelect(FocusNode node, TextEditingController ctrl) {
+    node.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !node.hasFocus) return;
+      ctrl.selection =
+          TextSelection(baseOffset: 0, extentOffset: ctrl.text.length);
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  bool _noteHardwareEnter(KeyEvent event) {
+    if (event is KeyDownEvent &&
+        (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+      _hardwareEnterAt = DateTime.now();
+    }
+    return false; // only noting it, the key goes on as usual
+  }
+
+  /// Enter on the callsign. A hardware-keyboard Enter saves the QSO (issue
+  /// #48); one from the on-screen keyboard walks on to the report (the
+  /// frequency first while it is empty), and Enter there onward to saving.
+  ///
+  /// The submit action and the hardware key event arrive in an order that
+  /// differs between devices and keyboards, so the choice waits a moment
+  /// for both: moving focus at once would take it from the callsign before
+  /// the Enter-to-save shortcut, which only acts there, sees the key.
+  void _onCallsignSubmitted() {
+    Timer(const Duration(milliseconds: 100), () {
+      if (!mounted || _isSaving || !_callsignFocus.hasFocus) return;
+      if (_callsignCtrl.text.trim().isEmpty) return; // saved meanwhile
+      final at = _hardwareEnterAt;
+      if (at != null &&
+          DateTime.now().difference(at) < const Duration(milliseconds: 500)) {
+        _submit();
+      } else if (_freqCtrl.text.trim().isEmpty) {
+        _focusAndSelect(_freqFocus, _freqCtrl);
+      } else {
+        _focusAndSelect(_rstSentFocus, _rstSentCtrl);
+      }
+    });
+  }
+
   Future<void> _submit() async {
+    // Enter can reach here twice for one press (the hardware shortcut and
+    // the field's submit action), never save the QSO twice.
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
 
     // Resolve the effective station: explicit selection → settings ID → first
@@ -1042,6 +1106,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                     ),
         ),
         textCapitalization: TextCapitalization.characters,
+        textInputAction: TextInputAction.next,
+        // The Enter chain moves focus itself (no default traversal).
+        onEditingComplete: () {},
         validator: validateCallsign,
         onChanged: (v) {
           if (v.endsWith(' ')) {
@@ -1099,8 +1166,9 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             _callsignCtrl.clear();
             return;
           }
-          _lookupDone = false;
-          _doLookup();
+          if (v.trim().isEmpty) return;
+          if (!_lookupDone) _doLookup();
+          _onCallsignSubmitted();
         },
       ),
 
@@ -1225,7 +1293,12 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
           prefixIcon: const Icon(Icons.waves),
           suffixIcon: const RigLinkButton(),
         ),
+        focusNode: _freqFocus,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
+        // The Enter chain moves focus itself (no default traversal).
+        onEditingComplete: () {},
+        onFieldSubmitted: (_) => _focusAndSelect(_rstSentFocus, _rstSentCtrl),
         validator: validateFrequency,
       ),
       const SizedBox(height: 12),
@@ -1235,8 +1308,14 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
         Expanded(
           child: TextFormField(
             controller: _rstSentCtrl,
+            focusNode: _rstSentFocus,
             decoration: InputDecoration(labelText: l10n.rstSentField),
             keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            // The Enter chain moves focus itself (no default traversal).
+            onEditingComplete: () {},
+            onFieldSubmitted: (_) =>
+                _focusAndSelect(_rstRcvdFocus, _rstRcvdCtrl),
             validator: (v) => validateRst(v, _mode),
           ),
         ),
@@ -1247,6 +1326,8 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
             focusNode: _rstRcvdFocus,
             decoration: InputDecoration(labelText: l10n.rstRcvdField),
             keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _submit(),
             validator: (v) => validateRst(v, _mode),
           ),
         ),
