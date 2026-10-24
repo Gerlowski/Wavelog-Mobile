@@ -33,6 +33,8 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
 
   // DXCC — stored as int id; DxccEntity holds name for display
   DxccEntity? _selectedDxcc;
+  // Set when Save is pressed on a new location without a DXCC entity.
+  bool _dxccMissing = false;
   List<DxccEntity> _dxccList = [];
   bool _dxccLoading = false;
   bool _dxccError = false;
@@ -260,7 +262,12 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
       );
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Wavelog requires DXCC, CQ and ITU zone for a new location and answers
+    // a validation error without them, which surfaced as the misleading
+    // "profile may already exist". Check them here instead.
+    final dxccMissing = !_isEditing && _selectedDxcc == null;
+    setState(() => _dxccMissing = dxccMissing);
+    if (!_formKey.currentState!.validate() || dxccMissing) return;
     setState(() => _saving = true);
     final l10n = context.l10n;
 
@@ -302,6 +309,11 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
     }
   }
 
+  String? _requiredZone(String? v) =>
+      !_isEditing && (int.tryParse(v?.trim() ?? '') ?? 0) <= 0
+          ? context.l10n.required
+          : null;
+
   Future<void> _pickDxcc() async {
     if (_dxccList.isEmpty) return;
     final result = await showModalBottomSheet<DxccEntity>(
@@ -315,6 +327,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
     if (result != null && mounted) {
       setState(() {
         _selectedDxcc = result;
+        _dxccMissing = false;
         if (result.cqZone > 0) _cqCtrl.text = result.cqZone.toString();
         if (result.ituZone > 0) _ituCtrl.text = result.ituZone.toString();
         _selectedState = null;
@@ -442,6 +455,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
               selected: _selectedDxcc,
               loading: _dxccLoading,
               hasError: _dxccError,
+              errorText: _dxccMissing ? l10n.required : null,
               onTap: _dxccError ? _loadDxccList : _pickDxcc,
             ),
             const SizedBox(height: 12),
@@ -487,6 +501,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
                   decoration: const InputDecoration(
                       labelText: 'CQ Zone', hintText: '20'),
                   keyboardType: TextInputType.number,
+                  validator: _requiredZone,
                 ),
               ),
               const SizedBox(width: 12),
@@ -496,6 +511,7 @@ class _CreateStationScreenState extends ConsumerState<CreateStationScreen> {
                   decoration: const InputDecoration(
                       labelText: 'ITU Zone', hintText: '29'),
                   keyboardType: TextInputType.number,
+                  validator: _requiredZone,
                 ),
               ),
             ]),
@@ -722,12 +738,14 @@ class _DxccPickerField extends StatelessWidget {
   final DxccEntity? selected;
   final bool loading;
   final bool hasError;
+  final String? errorText;
   final VoidCallback onTap;
   const _DxccPickerField({
     required this.selected,
     required this.loading,
     required this.onTap,
     this.hasError = false,
+    this.errorText,
   });
 
   @override
@@ -741,7 +759,7 @@ class _DxccPickerField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: l10n.dxccCountry,
           border: const OutlineInputBorder(),
-          errorText: hasError ? context.l10n.error : null,
+          errorText: hasError ? context.l10n.error : errorText,
           suffixIcon: loading
               ? const Padding(
                   padding: EdgeInsets.all(12),
