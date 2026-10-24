@@ -218,6 +218,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _freqCtrl.addListener(_updateAutoSpotStatus);
     if (widget.editQso == null) _freqCtrl.addListener(_saveFreqDebounced);
     _potaInputCtrl.addListener(_onPotaInputChanged);
+    _potaInputFocus.addListener(_onPotaInputFocusChanged);
     if (edit == null) {
       // Follow the radio's dial while a CAT link is up; _saveFreqDebounced
       // then picks the matching band.
@@ -313,6 +314,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
     _freqCtrl.removeListener(_updateAutoSpotStatus);
     if (widget.editQso == null) _freqCtrl.removeListener(_saveFreqDebounced);
     _potaInputCtrl.removeListener(_onPotaInputChanged);
+    _potaInputFocus.removeListener(_onPotaInputFocusChanged);
     _callsignFocus.removeListener(_onCallsignFocusChange);
     _callsignFocus.dispose();
     _rstRcvdFocus.dispose();
@@ -342,6 +344,17 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
       ..._potaRefs,
       if (pending.isNotEmpty && !_potaRefs.contains(pending)) pending,
     ];
+  }
+
+  /// Leaving the POTA field confirms a typed park as Enter would, so it is
+  /// looked up (name shown, an unknown one flagged) rather than left as
+  /// unchecked text.
+  void _onPotaInputFocusChanged() {
+    if (_potaInputFocus.hasFocus) return;
+    final r = _potaInputCtrl.text.trim().toUpperCase();
+    if (r.isEmpty) return;
+    _potaInputCtrl.clear();
+    _addPotaRef(r);
   }
 
   void _onPotaInputChanged() {

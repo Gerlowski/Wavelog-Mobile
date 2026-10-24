@@ -113,4 +113,16 @@ void main() {
     expect(tester.widget<EditableText>(potaField).focusNode.hasFocus, isTrue);
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('a park typed and left without Enter is confirmed',
+      (tester) async {
+    await pumpForm(tester, const AddQsoScreen(prefillPotaRef: 'PL-0123'));
+    final potaField = find.widgetWithText(TextFormField, 'POTA');
+    await tester.enterText(potaField, 'PL-0341');
+    // Move to another field instead of pressing Enter.
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+    expect(find.widgetWithText(InputChip, 'PL-0341'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+  });
 }
