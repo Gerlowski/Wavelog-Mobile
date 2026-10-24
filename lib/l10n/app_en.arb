@@ -1598,5 +1598,13 @@
   "rigErrorDetached": "Radio disconnected",
   "@rigErrorDetached": {},
   "rigErrorConnection": "Connection error ({code})",
-  "@rigErrorConnection": {"placeholders": {"code": {"type": "String"}}}
+  "@rigErrorConnection": {"placeholders": {"code": {"type": "String"}}},
+  "workedNewCountry": "New country",
+  "@workedNewCountry": {},
+  "workedNewBand": "New band ({band})",
+  "@workedNewBand": {"placeholders": {"band": {"type": "String"}}},
+  "workedNewMode": "New mode ({mode})",
+  "@workedNewMode": {"placeholders": {"mode": {"type": "String"}}},
+  "workedDupe": "Dupe: already worked today on {band} {mode}",
+  "@workedDupe": {"placeholders": {"band": {"type": "String"}, "mode": {"type": "String"}}}
 }

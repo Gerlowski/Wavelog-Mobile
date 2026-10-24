@@ -2347,4 +2347,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String rigErrorConnection(String code) {
     return 'Connection error ($code)';
   }
+
+  @override
+  String get workedNewCountry => 'New country';
+
+  @override
+  String workedNewBand(String band) {
+    return 'New band ($band)';
+  }
+
+  @override
+  String workedNewMode(String mode) {
+    return 'New mode ($mode)';
+  }
+
+  @override
+  String workedDupe(String band, String mode) {
+    return 'Dupe: already worked today on $band $mode';
+  }
 }
