@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/band_mode_data.dart';
 import '../../../core/rig/cat_protocol.dart';
 import '../../../core/utils/adif_generator.dart';
+import '../../../core/utils/contest_dupe.dart';
 import '../../../core/utils/keyboard_shortcuts.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/responsive.dart';
@@ -785,6 +786,22 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
                 },
               ),
 
+              // ── Already worked in this contest (dupe / other bands) ────
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _callsignCtrl,
+                builder: (context, value, _) => _ContestDupeBanner(
+                  callsign: value.text,
+                  band: _band,
+                  contestId: _session?.adifName.isNotEmpty == true
+                      ? _session!.adifName
+                      : _contestId,
+                  from: _session?.timeStart ??
+                      DateTime.now()
+                          .toUtc()
+                          .subtract(kContestWindowWithoutSession),
+                ),
+              ),
+
               // ── Compact lookup result (phone only) ─────────────────────
               if (!isTablet && _lookupResult != null) ...[
                 const SizedBox(height: 6),
@@ -1178,6 +1195,70 @@ class _Chip extends StatelessWidget {
             style: TextStyle(
                 fontSize: 12, fontWeight: FontWeight.w600, color: color)),
       );
+}
+
+// ── Contest dupe banner ───────────────────────────────────────────────────────
+
+/// Under the callsign while it is typed: a dupe warning when the station is
+/// already in this contest's log on the current band, else the bands it was
+/// worked on so far. Warns only; logging a dupe stays possible.
+class _ContestDupeBanner extends ConsumerWidget {
+  final String callsign;
+  final String band;
+  final String contestId;
+  final DateTime from;
+
+  const _ContestDupeBanner({
+    required this.callsign,
+    required this.band,
+    required this.contestId,
+    required this.from,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (callsign.trim().length < 3) return const SizedBox.shrink();
+    final log = ref.watch(qsoProvider).valueOrNull;
+    if (log == null) return const SizedBox.shrink();
+    final w = contestWorked(
+        log: log,
+        callsign: callsign,
+        band: band,
+        contestId: contestId,
+        from: from);
+    if (w.isEmpty) return const SizedBox.shrink();
+
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    final dupe = w.dupeOf;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(spacing: 6, runSpacing: 6, children: [
+        if (dupe != null)
+          Chip(
+            avatar: const Icon(Icons.warning_amber_rounded,
+                size: 16, color: Colors.white),
+            label: Text(
+                l10n.contestDupe(band,
+                    DateFormat('HH:mm').format(dupe.dateTimeOn.toUtc())),
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600)),
+            backgroundColor: Colors.orange.shade700,
+            side: BorderSide.none,
+            visualDensity: VisualDensity.compact,
+          ),
+        if (w.otherBands.isNotEmpty)
+          Chip(
+            avatar: Icon(Icons.history, size: 16, color: cs.onSecondaryContainer),
+            label: Text(l10n.contestWorkedOn(w.otherBands.join(', ')),
+                style: TextStyle(color: cs.onSecondaryContainer)),
+            backgroundColor: cs.secondaryContainer,
+            side: BorderSide.none,
+            visualDensity: VisualDensity.compact,
+          ),
+      ]),
+    );
+  }
 }
 
 // ── Compact lookup card (phone) ───────────────────────────────────────────────

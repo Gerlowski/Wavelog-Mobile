@@ -1622,5 +1622,9 @@
   "potaActivationProgress": "{park}: {count}/{needed} QSOs today (UTC)",
   "@potaActivationProgress": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}, "needed": {"type": "int"}}},
   "potaActivationDone": "{park}: activated ({count} QSOs today)",
-  "@potaActivationDone": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}}}
+  "@potaActivationDone": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}}},
+  "contestDupe": "DUPE: already in this contest on {band} ({time} UTC)",
+  "@contestDupe": {"placeholders": {"band": {"type": "String"}, "time": {"type": "String"}}},
+  "contestWorkedOn": "In this contest on: {bands}",
+  "@contestWorkedOn": {"placeholders": {"bands": {"type": "String"}}}
 }

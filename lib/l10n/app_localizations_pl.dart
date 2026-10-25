@@ -2428,4 +2428,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String potaActivationDone(String park, int count) {
     return '$park: aktywacja zaliczona ($count QSO dziś)';
   }
+
+  @override
+  String contestDupe(String band, String time) {
+    return 'DUPLIKAT: już w tych zawodach na $band ($time UTC)';
+  }
+
+  @override
+  String contestWorkedOn(String bands) {
+    return 'W tych zawodach na: $bands';
+  }
 }

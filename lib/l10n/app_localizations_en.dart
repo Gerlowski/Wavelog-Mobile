@@ -2421,4 +2421,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String potaActivationDone(String park, int count) {
     return '$park: activated ($count QSOs today)';
   }
+
+  @override
+  String contestDupe(String band, String time) {
+    return 'DUPE: already in this contest on $band ($time UTC)';
+  }
+
+  @override
+  String contestWorkedOn(String bands) {
+    return 'In this contest on: $bands';
+  }
 }
