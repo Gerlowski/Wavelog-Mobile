@@ -1622,5 +1622,9 @@
   "potaActivationProgress": "{park}: {count}/{needed} QSOs today (UTC)",
   "@potaActivationProgress": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}, "needed": {"type": "int"}}},
   "potaActivationDone": "{park}: activated ({count} QSOs today)",
-  "@potaActivationDone": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}}}
+  "@potaActivationDone": {"placeholders": {"park": {"type": "String"}, "count": {"type": "int"}}},
+  "keepScreenOnWhileLogging": "Keep the screen on while logging",
+  "@keepScreenOnWhileLogging": {},
+  "keepScreenOnWhileLoggingHint": "The screen stays on while Add QSO or the contest log is open",
+  "@keepScreenOnWhileLoggingHint": {}
 }

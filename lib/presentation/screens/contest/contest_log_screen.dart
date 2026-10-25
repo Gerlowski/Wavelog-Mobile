@@ -22,6 +22,7 @@ import '../../../providers/qso_provider.dart';
 import '../../../providers/remote_datasource_provider.dart';
 import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../widgets/keep_screen_on.dart';
 import '../../widgets/rig/rig_link_button.dart';
 import '../qso/add_qso_screen.dart';
 
@@ -103,9 +104,12 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
 
   ContestSession? _session;
 
+  final _screenOn = KeepScreenOn();
+
   @override
   void initState() {
     super.initState();
+    _screenOn.start(ref);
     _session = widget.session;
     if (_session != null) {
       _contestId = _session!.adifName;
@@ -147,6 +151,7 @@ class _ContestLogScreenState extends ConsumerState<ContestLogScreen> {
 
   @override
   void dispose() {
+    _screenOn.stop();
     _freqDebounce?.cancel();
     _lookupDebounce?.cancel();
     _freqCtrl.removeListener(_onFreqChanged);

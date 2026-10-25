@@ -2421,4 +2421,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String potaActivationDone(String park, int count) {
     return '$park: activated ($count QSOs today)';
   }
+
+  @override
+  String get keepScreenOnWhileLogging => 'Keep the screen on while logging';
+
+  @override
+  String get keepScreenOnWhileLoggingHint =>
+      'The screen stays on while Add QSO or the contest log is open';
 }

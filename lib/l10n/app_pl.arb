@@ -843,5 +843,7 @@
   "potaUnknownParkBody": "W bazie pota.app nie ma parku {refs}. Zapisać QSO mimo to?",
   "spotNewPark": "Nowy park",
   "potaActivationProgress": "{park}: {count}/{needed} QSO dziś (UTC)",
-  "potaActivationDone": "{park}: aktywacja zaliczona ({count} QSO dziś)"
+  "potaActivationDone": "{park}: aktywacja zaliczona ({count} QSO dziś)",
+  "keepScreenOnWhileLogging": "Nie wygaszaj ekranu podczas logowania",
+  "keepScreenOnWhileLoggingHint": "Ekran nie gaśnie, gdy otwarte jest dodawanie QSO albo log konkursowy"
 }
