@@ -27,4 +27,5 @@ class ApiEndpoints {
   static const String lookup     = '$_v2/lookup';
   static const String version      = '$_v2/status';
   static const String confirmation = '$_v2/confirmation';
+  static const String token        = '$_v2/token';
 }
