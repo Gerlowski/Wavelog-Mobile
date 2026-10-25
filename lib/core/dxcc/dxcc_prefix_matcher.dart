@@ -50,6 +50,7 @@ class DxccPrefixMatcher {
   DxccPrefixMatcher._(List<(String, DxccEntity)> expanded) {
     for (final (prefix, entity) in expanded) {
       _byPrefix.putIfAbsent(prefix, () => entity);
+      _byAdif.putIfAbsent(entity.adif, () => entity);
       if (prefix.length > _maxLen) _maxLen = prefix.length;
     }
   }
@@ -58,7 +59,11 @@ class DxccPrefixMatcher {
   /// a variant claimed by two entities keeps the first, as a linear scan of
   /// that list would.
   final _byPrefix = <String, DxccEntity>{};
+  final _byAdif = <int, DxccEntity>{};
   var _maxLen = 0;
+
+  /// The catalog entity with ADIF number [adif].
+  DxccEntity? byAdif(int adif) => _byAdif[adif];
 
   static const _assetPath = 'assets/dxcc/dxcc_prefix_table.json';
 
