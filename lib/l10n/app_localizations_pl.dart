@@ -2438,4 +2438,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String contestWorkedOn(String bands) {
     return 'W tych zawodach na: $bands';
   }
+
+  @override
+  String get keepScreenOnWhileLogging =>
+      'Nie wygaszaj ekranu podczas logowania';
+
+  @override
+  String get keepScreenOnWhileLoggingHint =>
+      'Ekran nie gaśnie, gdy otwarte jest dodawanie QSO albo log konkursowy';
 }

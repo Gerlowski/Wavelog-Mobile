@@ -4665,6 +4665,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'In this contest on: {bands}'**
   String contestWorkedOn(String bands);
+
+  /// No description provided for @keepScreenOnWhileLogging.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the screen on while logging'**
+  String get keepScreenOnWhileLogging;
+
+  /// No description provided for @keepScreenOnWhileLoggingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The screen stays on while Add QSO or the contest log is open'**
+  String get keepScreenOnWhileLoggingHint;
 }
 
 class _AppLocalizationsDelegate

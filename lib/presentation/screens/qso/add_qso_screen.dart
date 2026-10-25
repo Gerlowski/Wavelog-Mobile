@@ -31,6 +31,7 @@ import '../../../providers/rig_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/station_provider.dart';
 import '../../../providers/worked_before_provider.dart';
+import '../../widgets/keep_screen_on.dart';
 import '../../widgets/pota/pota_park_autocomplete.dart';
 import '../../widgets/rig/rig_link_button.dart';
 
@@ -137,9 +138,12 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
   int _lookupSeq = 0;
   Timer? _freqSaveDebounce;
 
+  final _screenOn = KeepScreenOn();
+
   @override
   void initState() {
     super.initState();
+    _screenOn.start(ref);
     HardwareKeyboard.instance.addHandler(_noteHardwareEnter);
     final settings = ref.read(settingsProvider);
     _band = '20m';
@@ -310,6 +314,7 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
 
   @override
   void dispose() {
+    _screenOn.stop();
     _callsignPanelTimer?.cancel();
     _statusTimer?.cancel();
     _freqSaveDebounce?.cancel();

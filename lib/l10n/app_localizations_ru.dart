@@ -2446,4 +2446,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String contestWorkedOn(String bands) {
     return 'In this contest on: $bands';
   }
+
+  @override
+  String get keepScreenOnWhileLogging => 'Keep the screen on while logging';
+
+  @override
+  String get keepScreenOnWhileLoggingHint =>
+      'The screen stays on while Add QSO or the contest log is open';
 }

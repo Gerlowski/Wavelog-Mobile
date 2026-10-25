@@ -30,6 +30,7 @@ class SettingsLocalDatasource {
   static const _keySpotRefreshSeconds    = 'wl_spot_refresh_seconds';
   static const _keyQsoSyncCheckInterval  = 'wl_qso_sync_check_interval_minutes';
   static const _keyOpenAddQsoOnStart     = 'wl_open_add_qso_on_start';
+  static const _keyKeepScreenOn          = 'wl_keep_screen_on_logging';
 
   Future<SettingsModel> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -76,6 +77,7 @@ class SettingsLocalDatasource {
       qsoSyncCheckIntervalMinutes:
           prefs.getInt(_keyQsoSyncCheckInterval) ?? 30,
       openAddQsoOnStart:      prefs.getBool(_keyOpenAddQsoOnStart) ?? false,
+      keepScreenOnWhileLogging: prefs.getBool(_keyKeepScreenOn) ?? true,
     );
   }
 
@@ -124,6 +126,7 @@ class SettingsLocalDatasource {
     await prefs.setInt(
         _keyQsoSyncCheckInterval, settings.qsoSyncCheckIntervalMinutes);
     await prefs.setBool(_keyOpenAddQsoOnStart, settings.openAddQsoOnStart);
+    await prefs.setBool(_keyKeepScreenOn, settings.keepScreenOnWhileLogging);
     if (settings.locale != null) {
       await prefs.setString(_keyLocale, settings.locale!);
     } else {

@@ -845,5 +845,7 @@
   "potaActivationProgress": "{park}: {count}/{needed} QSO dziś (UTC)",
   "potaActivationDone": "{park}: aktywacja zaliczona ({count} QSO dziś)",
   "contestDupe": "DUPLIKAT: już w tych zawodach na {band} ({time} UTC)",
-  "contestWorkedOn": "W tych zawodach na: {bands}"
+  "contestWorkedOn": "W tych zawodach na: {bands}",
+  "keepScreenOnWhileLogging": "Nie wygaszaj ekranu podczas logowania",
+  "keepScreenOnWhileLoggingHint": "Ekran nie gaśnie, gdy otwarte jest dodawanie QSO albo log konkursowy"
 }
