@@ -156,7 +156,8 @@ final _mapMarkersProvider = FutureProvider<List<_QsoMarker>>((ref) async {
 // ── Base maps ─────────────────────────────────────────────────────────────────
 
 /// The map backgrounds to choose from. [auto] is light or dark with the
-/// app's theme. All are free to use with the attribution shown on the map.
+/// app's theme. All are free to use without an API key, with the
+/// attribution shown under the map.
 enum _BaseMap {
   auto,
   light,
@@ -177,20 +178,19 @@ class _Tiles {
       {this.subdomains = const [], this.maxZoom = 19});
 }
 
-const _cartoAttribution = '© OpenStreetMap  © CARTO';
+const _esriCanvasAttribution = '© Esri, HERE, Garmin, © OpenStreetMap';
 
 _Tiles _tilesFor(_BaseMap base, bool isDark) => switch (base) {
       _BaseMap.auto => _tilesFor(isDark ? _BaseMap.dark : _BaseMap.light, isDark),
+      // Esri's grey canvases need no API key (CARTO's basemaps now do).
       _BaseMap.light => const _Tiles(
-          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-          _cartoAttribution,
-          subdomains: ['a', 'b', 'c', 'd'],
-          maxZoom: 20),
+          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+          _esriCanvasAttribution,
+          maxZoom: 16),
       _BaseMap.dark => const _Tiles(
-          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-          _cartoAttribution,
-          subdomains: ['a', 'b', 'c', 'd'],
-          maxZoom: 20),
+          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+          _esriCanvasAttribution,
+          maxZoom: 16),
       _BaseMap.satellite => const _Tiles(
           'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
           '© Esri, Maxar, Earthstar Geographics'),
@@ -236,7 +236,8 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   final _mapController = MapController();
-  String _bandFilter = 'All';
+  /// Bands shown; empty shows all.
+  Set<String> _shownBands = const {};
   _QsoMarker? _popup;
   Offset? _popupPos; // position within the map Stack
 
@@ -360,7 +361,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   List<_QsoMarker> _filter(List<_QsoMarker> all) =>
-      _bandFilter == 'All' ? all : all.where((m) => m.band == _bandFilter).toList();
+      _shownBands.isEmpty
+          ? all
+          : all.where((m) => _shownBands.contains(m.band)).toList();
 
   List<String> _bands(List<_QsoMarker> all) {
     final bands = all.map((m) => m.band).where((b) => b.isNotEmpty).toSet().toList();
@@ -439,7 +442,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             tooltip: 'Refresh',
             onPressed: () {
               setState(() {
-                _bandFilter = 'All';
+                _shownBands = const {};
                 _popup = null;
               });
               ref.invalidate(_mapMarkersProvider);
@@ -493,36 +496,40 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           return Column(
             children: [
               // Band filter chips
+              // Tap bands to show several at once; "All" clears the choice.
               if (bands.isNotEmpty)
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    children: [
-                      _BandChip(
-                        label: 'All',
-                        color: cs.primary,
-                        selected: _bandFilter == 'All',
-                        onTap: () => setState(() {
-                          _bandFilter = 'All';
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                  child: Row(children: [
+                    ChoiceChip(
+                      label: Text(l10n.filterAll),
+                      selected: _shownBands.isEmpty,
+                      showCheckmark: false,
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => setState(() {
+                        _shownBands = const {};
+                        _popup = null;
+                      }),
+                    ),
+                    for (final b in bands) ...[
+                      const SizedBox(width: 6),
+                      FilterChip(
+                        avatar: CircleAvatar(
+                            radius: 5, backgroundColor: _bandColor(b)),
+                        label: Text(b),
+                        selected: _shownBands.contains(b),
+                        showCheckmark: false,
+                        visualDensity: VisualDensity.compact,
+                        onSelected: (on) => setState(() {
+                          _shownBands = on
+                              ? {..._shownBands, b}
+                              : ({..._shownBands}..remove(b));
                           _popup = null;
                         }),
                       ),
-                      ...bands.map((b) => Padding(
-                            padding: const EdgeInsets.only(left: 6),
-                            child: _BandChip(
-                              label: b,
-                              color: _bandColor(b),
-                              selected: _bandFilter == b,
-                              onTap: () => setState(() {
-                                _bandFilter = b;
-                                _popup = null;
-                              }),
-                            ),
-                          )),
                     ],
-                  ),
+                  ]),
                 ),
 
               // Map + overlays
@@ -535,6 +542,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         initialCenter: const LatLng(30, 15),
                         initialZoom: 2,
                         minZoom: 1,
+                        cameraConstraint: CameraConstraint.contain(
+                          bounds: LatLngBounds(
+                            const LatLng(-kWebMercatorMaxLat, -180),
+                            const LatLng(kWebMercatorMaxLat, 180),
+                          ),
+                        ),
                         maxZoom: 18,
                         onTap: (tapPos, latLng) => _handleTap(tapPos, latLng, visible),
                       ),
@@ -605,8 +618,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
 
               // Status bar
+              // Clear of the system navigation bar (edge-to-edge).
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                padding: EdgeInsets.fromLTRB(
+                    16, 7, 16, 7 + MediaQuery.paddingOf(context).bottom),
                 color: cs.surfaceContainerLow,
                 child: Row(
                   children: [
@@ -616,22 +631,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       l10n.mapStationCount(visible.length),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                     ),
-                    if (_bandFilter != 'All') ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(color: _bandColor(_bandFilter), shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _bandFilter,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: _bandColor(_bandFilter),
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ],
                     const Spacer(),
                     Text(
                       tiles.attribution,
@@ -945,46 +944,6 @@ class _ZoomButton extends StatelessWidget {
           width: 38,
           height: 38,
           child: Icon(icon, size: 20, color: cs.onSurface),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Band Filter Chip ──────────────────────────────────────────────────────────
-
-class _BandChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _BandChip({
-    required this.label,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: selected ? color : color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: selected ? 0.0 : 0.45)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : color,
-          ),
         ),
       ),
     );
