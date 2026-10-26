@@ -1733,11 +1733,11 @@ class _AddQsoScreenState extends ConsumerState<AddQsoScreen> {
                       overflow: TextOverflow.ellipsis,
                     )))
                 .toList(),
+            // For this QSO only: the active station stays as it is (the
+            // station chip on Home changes that, also on the server). The
+            // form opens on the active station again next time.
             onChanged: (v) {
               setState(() => _selectedStation = v);
-              if (v != null) {
-                ref.read(settingsProvider.notifier).setActiveStation(v);
-              }
               _updateAutoSpotStatus();
             },
           );
