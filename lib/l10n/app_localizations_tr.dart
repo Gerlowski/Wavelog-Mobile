@@ -2286,24 +2286,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncNothing => 'Senkronize edilecek bir şey yok';
 
   @override
-  String get openAddQsoOnStart => 'QSO Ekle ekranıyla başlat';
+  String get openAddQsoOnStart => 'Start on Add QSO';
 
   @override
   String get openAddQsoOnStartHint =>
-      'Uygulama açılır açılmaz QSO formunu aç; Geri tuşu Ana Sayfa\'ya götürür';
+      'Open the QSO form right after the app starts; Back leads to Home';
 
   @override
-  String get rigSection => 'Telsiz (CAT)';
+  String get rigSection => 'Radio (CAT)';
 
   @override
-  String get rigScreenTitle => 'Telsiz bağlantısı (CAT)';
+  String get rigScreenTitle => 'Radio connection (CAT)';
 
   @override
   String get rigTileSubtitle =>
-      'USB kablosuyla bağlı telsizden frekansı canlı oku';
+      'Read the frequency live from a radio connected by USB cable';
 
   @override
-  String get rigProtocolLabel => 'Protokol';
+  String get rigProtocolLabel => 'Protocol';
 
   @override
   String get rigProtocolIcom => 'Icom CI-V';
@@ -2318,121 +2318,121 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rigProtocolYaesuLegacy => 'Yaesu FT-817/818/857/897';
 
   @override
-  String get rigBaudLabel => 'Baud hızı';
+  String get rigBaudLabel => 'Baud rate';
 
   @override
-  String get rigCivAddressLabel => 'CI-V adresi';
+  String get rigCivAddressLabel => 'CI-V address';
 
   @override
   String get rigCivAddressHint =>
-      'ör. IC-7300 için 94, IC-705 için A4, IC-7610 için 98, Xiegu G90 için 88';
+      'e.g. 94 IC-7300, A4 IC-705, 98 IC-7610, 88 Xiegu G90';
 
   @override
-  String get rigAutoConnect => 'Otomatik bağlan';
+  String get rigAutoConnect => 'Connect automatically';
 
   @override
   String get rigAutoConnectHint =>
-      'Kablo takıldığında veya uygulama kablo takılıyken açıldığında. Android sorusunda \"Her zaman\" seçilirse soru tekrar çıkmaz.';
+      'When the radio\'s USB cable is plugged in, or the app starts with it plugged in. Tick \"Always\" in Android\'s prompt to skip it next time.';
 
   @override
-  String get rigDevicesLabel => 'USB cihazları';
+  String get rigDevicesLabel => 'USB devices';
 
   @override
   String get rigNoDevices =>
-      'USB seri cihaz bulunamadı. Telsizi bir USB OTG kablosuyla bağlayın.';
+      'No USB serial device found. Connect the radio with a USB OTG cable.';
 
   @override
-  String get rigRefresh => 'Yenile';
+  String get rigRefresh => 'Refresh';
 
   @override
-  String get rigConnect => 'Bağlan';
+  String get rigConnect => 'Connect';
 
   @override
-  String get rigDisconnect => 'Bağlantıyı kes';
+  String get rigDisconnect => 'Disconnect';
 
   @override
   String rigStatusConnected(String device) {
-    return 'Bağlandı: $device';
+    return 'Connected: $device';
   }
 
   @override
-  String get rigStatusConnecting => 'Bağlanıyor…';
+  String get rigStatusConnecting => 'Connecting…';
 
   @override
-  String get rigStatusDisconnected => 'Bağlı değil';
+  String get rigStatusDisconnected => 'Not connected';
 
   @override
   String get rigWaitingForData =>
-      'Telsiz bekleniyor… Protokolü, baud hızını ve CI-V adresini kontrol edin.';
+      'Waiting for the radio… Check the protocol, baud rate and CI-V address.';
 
   @override
-  String get rigErrorPermission => 'USB izni reddedildi';
+  String get rigErrorPermission => 'USB permission denied';
 
   @override
-  String get rigErrorDetached => 'Telsiz bağlantısı kesildi';
+  String get rigErrorDetached => 'Radio disconnected';
 
   @override
   String rigErrorConnection(String code) {
-    return 'Bağlantı hatası ($code)';
+    return 'Connection error ($code)';
   }
 
   @override
-  String get workedNewCountry => 'Yeni ülke';
+  String get workedNewCountry => 'New country';
 
   @override
   String workedNewBand(String band) {
-    return 'Yeni bant ($band)';
+    return 'New band ($band)';
   }
 
   @override
   String workedNewMode(String mode) {
-    return 'Yeni mod ($mode)';
+    return 'New mode ($mode)';
   }
 
   @override
   String workedDupe(String band, String mode) {
-    return 'Dupe: bugün $band $mode üzerinde zaten çalışıldı';
+    return 'Dupe: already worked today on $band $mode';
   }
 
   @override
   String get stationWebOnlySettingsHint =>
-      'QRZ.com, HRDLog.net, QO-100, OQRS ve varsayılan eQSL mesajı yalnızca Wavelog web arayüzünden ayarlanır.';
+      'QRZ.com, HRDLog.net, QO-100 (webADIF), OQRS and the default eQSL message are set in Wavelog\'s web interface: the API does not expose them to the app.';
 
   @override
   String get qsoReferencesSection => 'POTA / SOTA / WWFF';
 
   @override
-  String get potaRefHint => 'TA-0001, yenisini Enter veya virgülle ekleyin';
+  String get potaRefHint => 'US-1234, add more with Enter or a comma';
 
   @override
-  String get potaUnknownParkTitle => 'Bilinmeyen park';
+  String get potaUnknownParkTitle => 'Unknown park';
 
   @override
   String potaUnknownParkBody(String refs) {
-    return 'pota.app\'te $refs parkı yok. Yine de kaydedilsin mi?';
+    return 'pota.app has no park $refs. Save the QSO anyway?';
   }
 
   @override
-  String get spotNewPark => 'Yeni park';
+  String get spotNewPark => 'New park';
 
   @override
   String potaActivationProgress(String park, int count, int needed) {
-    return '$park: bugün $count/$needed QSO (UTC)';
+    return '$park: $count/$needed QSOs today (UTC)';
   }
 
   @override
   String potaActivationDone(String park, int count) {
-    return '$park: aktivasyon tamamlandı (bugün $count QSO)';
+    return '$park: activated ($count QSOs today)';
   }
 
   @override
   String contestDupe(String band, String time) {
-    return 'DUPE: bu yarışmada $band bandında zaten yapıldı ($time UTC)';
+    return 'DUPE: already in this contest on $band ($time UTC)';
   }
 
   @override
   String contestWorkedOn(String bands) {
-    return 'Bu yarışmada çalışıldı: $bands';
+    return 'In this contest on: $bands';
   }
 
   @override
