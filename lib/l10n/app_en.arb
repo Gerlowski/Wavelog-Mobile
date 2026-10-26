@@ -1648,5 +1648,7 @@
   "mapGreyline": "Greyline",
   "@mapGreyline": {},
   "mapGreylineHint": "Night side and the day/night boundary, now",
-  "@mapGreylineHint": {}
+  "@mapGreylineHint": {},
+  "mapNorthUp": "North up",
+  "@mapNorthUp": {}
 }

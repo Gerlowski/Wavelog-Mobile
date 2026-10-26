@@ -4731,6 +4731,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Night side and the day/night boundary, now'**
   String get mapGreylineHint;
+
+  /// No description provided for @mapNorthUp.
+  ///
+  /// In en, this message translates to:
+  /// **'North up'**
+  String get mapNorthUp;
 }
 
 class _AppLocalizationsDelegate

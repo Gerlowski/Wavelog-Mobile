@@ -2473,4 +2473,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get mapGreylineHint => 'Strona nocna i granica dnia i nocy, na żywo';
+
+  @override
+  String get mapNorthUp => 'Północ do góry';
 }

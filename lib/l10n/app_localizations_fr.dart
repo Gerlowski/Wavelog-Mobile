@@ -2477,4 +2477,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mapGreylineHint => 'Night side and the day/night boundary, now';
+
+  @override
+  String get mapNorthUp => 'North up';
 }
