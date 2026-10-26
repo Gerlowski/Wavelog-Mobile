@@ -2430,6 +2430,14 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get keepScreenOnWhileLogging =>
+      'Nie wygaszaj ekranu podczas logowania';
+
+  @override
+  String get keepScreenOnWhileLoggingHint =>
+      'Ekran nie gaśnie, gdy otwarte jest dodawanie QSO albo log konkursowy';
+
+  @override
   String contestDupe(String band, String time) {
     return 'DUPLIKAT: już w tych zawodach na $band ($time UTC)';
   }

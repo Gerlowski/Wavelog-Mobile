@@ -5,6 +5,7 @@ import android.hardware.usb.UsbManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.view.WindowManager
 import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -57,6 +58,24 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("FINALIZE_ERROR", e.message, null)
                     }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // ── Keep the screen on while logging ────────────────────────────
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.wavelog_mobile/screen"
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "setKeepScreenOn" -> {
+                    if (call.arguments == true) {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
+                    result.success(null)
                 }
                 else -> result.notImplemented()
             }

@@ -4654,6 +4654,18 @@ abstract class AppLocalizations {
   /// **'{park}: activated ({count} QSOs today)'**
   String potaActivationDone(String park, int count);
 
+  /// No description provided for @keepScreenOnWhileLogging.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the screen on while logging'**
+  String get keepScreenOnWhileLogging;
+
+  /// No description provided for @keepScreenOnWhileLoggingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The screen stays on while Add QSO or the contest log is open'**
+  String get keepScreenOnWhileLoggingHint;
+
   /// No description provided for @contestDupe.
   ///
   /// In en, this message translates to:

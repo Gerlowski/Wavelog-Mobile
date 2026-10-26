@@ -2398,6 +2398,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get keepScreenOnWhileLogging => 'Keep the screen on while logging';
+
+  @override
+  String get keepScreenOnWhileLoggingHint =>
+      'The screen stays on while Add QSO or the contest log is open';
+
+  @override
   String contestDupe(String band, String time) {
     return 'DUPE: already in this contest on $band ($time UTC)';
   }
