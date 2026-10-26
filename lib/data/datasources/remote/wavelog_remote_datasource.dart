@@ -386,6 +386,24 @@ class WavelogRemoteDatasource {
 
   // ── Statistics, v2 native ───────────────────────────────────────────────────
 
+  /// Pushes the live rig state to Wavelog's CAT radios (POST upserts by
+  /// [radio] name). Needs the token's radio:write scope.
+  Future<void> pushRadioStatus({
+    required String radio,
+    required int frequencyHz,
+    String? mode,
+  }) async {
+    try {
+      await _dio.post(ApiEndpoints.radio, data: {
+        'radio': radio,
+        'frequency': frequencyHz,
+        if (mode != null) 'mode': mode,
+      });
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
   Future<StatisticsModel> getStatistics() async {
     try {
       final response = await _dio.get(ApiEndpoints.statistics);
