@@ -45,6 +45,7 @@ When creating the token in Wavelog under **Settings → API Tokens → New Token
 | `logbook:read` / `logbook:write` / `logbook:delete` | Manage logbooks |
 | `lookup:read` | Callsign lookup |
 | `qso:read` / `qso:write` / `qso:delete` | Log and browse QSOs |
+| `radio:write` | Report the CAT radio's frequency and mode to Wavelog (optional, only with a USB CAT radio) |
 | `station:read` / `station:write` / `station:delete` | Manage station profiles |
 | `statistic:read` | Statistics screen |
 
