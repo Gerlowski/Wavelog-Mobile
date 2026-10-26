@@ -31,6 +31,15 @@ enum CatProtocol {
 
   /// CI-V address the radio ships with (IC-7300 for Icom, G90 for Xiegu).
   int get defaultCivAddress => this == CatProtocol.xieguCiv ? 0x88 : 0x94;
+
+  /// Name the radio is listed under in Wavelog's CAT radios (on-air widget,
+  /// QSO form), matching what desktop CAT tools report for the same rig.
+  String get wavelogRadioName => switch (this) {
+        CatProtocol.icomCiv => 'Icom',
+        CatProtocol.xieguCiv => 'Xiegu G90',
+        CatProtocol.kenwood => 'Kenwood/Yaesu',
+        CatProtocol.yaesuLegacy => 'Yaesu FT-817',
+      };
 }
 
 /// Operating mode as the radio reports it, reduced to what the log needs.
