@@ -2441,4 +2441,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String contestWorkedOn(String bands) {
     return 'Bu yarışmada çalışıldı: $bands';
   }
+
+  @override
+  String get mapLayers => 'Map layers';
+
+  @override
+  String get mapBaseAuto => 'Automatic (light / dark)';
+
+  @override
+  String get mapBaseLight => 'Light';
+
+  @override
+  String get mapBaseDark => 'Dark';
+
+  @override
+  String get mapBaseTopo => 'Topographic';
+
+  @override
+  String get mapGreatCircles => 'Great-circle lines from my station';
+
+  @override
+  String get mapGreyline => 'Greyline';
+
+  @override
+  String get mapGreylineHint => 'Night side and the day/night boundary, now';
+
+  @override
+  String get mapNorthUp => 'North up';
 }

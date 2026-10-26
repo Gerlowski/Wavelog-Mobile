@@ -2446,4 +2446,31 @@ class AppLocalizationsPl extends AppLocalizations {
   String contestWorkedOn(String bands) {
     return 'W tych zawodach na: $bands';
   }
+
+  @override
+  String get mapLayers => 'Warstwy mapy';
+
+  @override
+  String get mapBaseAuto => 'Automatyczna (jasna / ciemna)';
+
+  @override
+  String get mapBaseLight => 'Jasna';
+
+  @override
+  String get mapBaseDark => 'Ciemna';
+
+  @override
+  String get mapBaseTopo => 'Topograficzna';
+
+  @override
+  String get mapGreatCircles => 'Linie po wielkim kole od mojej stacji';
+
+  @override
+  String get mapGreyline => 'Greyline';
+
+  @override
+  String get mapGreylineHint => 'Strona nocna i granica dnia i nocy, na żywo';
+
+  @override
+  String get mapNorthUp => 'Północ do góry';
 }

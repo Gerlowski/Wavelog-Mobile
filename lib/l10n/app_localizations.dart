@@ -4677,6 +4677,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'In this contest on: {bands}'**
   String contestWorkedOn(String bands);
+
+  /// No description provided for @mapLayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Map layers'**
+  String get mapLayers;
+
+  /// No description provided for @mapBaseAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic (light / dark)'**
+  String get mapBaseAuto;
+
+  /// No description provided for @mapBaseLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get mapBaseLight;
+
+  /// No description provided for @mapBaseDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get mapBaseDark;
+
+  /// No description provided for @mapBaseTopo.
+  ///
+  /// In en, this message translates to:
+  /// **'Topographic'**
+  String get mapBaseTopo;
+
+  /// No description provided for @mapGreatCircles.
+  ///
+  /// In en, this message translates to:
+  /// **'Great-circle lines from my station'**
+  String get mapGreatCircles;
+
+  /// No description provided for @mapGreyline.
+  ///
+  /// In en, this message translates to:
+  /// **'Greyline'**
+  String get mapGreyline;
+
+  /// No description provided for @mapGreylineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Night side and the day/night boundary, now'**
+  String get mapGreylineHint;
+
+  /// No description provided for @mapNorthUp.
+  ///
+  /// In en, this message translates to:
+  /// **'North up'**
+  String get mapNorthUp;
 }
 
 class _AppLocalizationsDelegate
