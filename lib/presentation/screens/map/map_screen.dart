@@ -156,13 +156,12 @@ final _mapMarkersProvider = FutureProvider<List<_QsoMarker>>((ref) async {
 // ── Base maps ─────────────────────────────────────────────────────────────────
 
 /// The map backgrounds to choose from. [auto] is light or dark with the
-/// app's theme. All are free to use without an API key, with the
+/// app's theme. All may be used by an app without an API key, with the
 /// attribution shown under the map.
 enum _BaseMap {
   auto,
   light,
   dark,
-  satellite,
   topo;
 
   static _BaseMap fromName(String? name) =>
@@ -174,29 +173,34 @@ class _Tiles {
   final List<String> subdomains;
   final int maxZoom;
   final String attribution;
+  /// Shown through [_kDarkTiles]: OpenStreetMap has no dark style.
+  final bool darkened;
   const _Tiles(this.url, this.attribution,
-      {this.subdomains = const [], this.maxZoom = 19});
+      {this.subdomains = const [], this.maxZoom = 19, this.darkened = false});
 }
 
-const _esriCanvasAttribution = '© Esri, HERE, Garmin, © OpenStreetMap';
+const _osmUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const _osmAttribution = '© OpenStreetMap contributors';
+
+/// Inverts the tiles and turns the hues back by 180°, as CSS
+/// `invert(1) hue-rotate(180deg)`: dark land and sea, with water still
+/// blue and parks still green.
+const _kDarkTiles = ColorFilter.matrix(<double>[
+  0.574, -1.430, -0.144, 0, 255, //
+  -0.426, -0.430, -0.144, 0, 255, //
+  -0.426, -1.430, 0.856, 0, 255, //
+  0, 0, 0, 1, 0,
+]);
 
 _Tiles _tilesFor(_BaseMap base, bool isDark) => switch (base) {
       _BaseMap.auto => _tilesFor(isDark ? _BaseMap.dark : _BaseMap.light, isDark),
-      // Esri's grey canvases need no API key (CARTO's basemaps now do).
-      _BaseMap.light => const _Tiles(
-          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-          _esriCanvasAttribution,
-          maxZoom: 16),
-      _BaseMap.dark => const _Tiles(
-          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-          _esriCanvasAttribution,
-          maxZoom: 16),
-      _BaseMap.satellite => const _Tiles(
-          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          '© Esri, Maxar, Earthstar Geographics'),
+      _BaseMap.light => const _Tiles(_osmUrl, _osmAttribution),
+      _BaseMap.dark => const _Tiles(_osmUrl, _osmAttribution, darkened: true),
+      // The credit OpenTopoMap asks for.
       _BaseMap.topo => const _Tiles(
           'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-          '© OpenStreetMap  © OpenTopoMap (CC-BY-SA)',
+          'Map data: © OpenStreetMap contributors, SRTM  '
+          'Map style: © OpenTopoMap (CC-BY-SA)',
           subdomains: ['a', 'b', 'c'],
           maxZoom: 17),
     };
@@ -309,7 +313,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             _BaseMap.auto: l10n.mapBaseAuto,
             _BaseMap.light: l10n.mapBaseLight,
             _BaseMap.dark: l10n.mapBaseDark,
-            _BaseMap.satellite: l10n.mapBaseSatellite,
             _BaseMap.topo: l10n.mapBaseTopo,
           };
           return SafeArea(
@@ -573,12 +576,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                       children: [
-                        TileLayer(
-                          urlTemplate: tiles.url,
-                          subdomains: tiles.subdomains,
-                          userAgentPackageName: 'com.wavelog_mobile',
-                          maxNativeZoom: tiles.maxZoom,
-                          maxZoom: 19,
+                        ColorFiltered(
+                          colorFilter: tiles.darkened
+                              ? _kDarkTiles
+                              : const ColorFilter.mode(
+                                  Colors.transparent, BlendMode.dst),
+                          child: TileLayer(
+                            urlTemplate: tiles.url,
+                            subdomains: tiles.subdomains,
+                            userAgentPackageName: 'com.wavelog_mobile',
+                            maxNativeZoom: tiles.maxZoom,
+                            maxZoom: 19,
+                          ),
                         ),
                         if (_showGreyline)
                           PolygonLayer(polygons: [

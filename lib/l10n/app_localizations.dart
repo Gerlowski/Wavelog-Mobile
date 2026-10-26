@@ -4702,12 +4702,6 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get mapBaseDark;
 
-  /// No description provided for @mapBaseSatellite.
-  ///
-  /// In en, this message translates to:
-  /// **'Satellite'**
-  String get mapBaseSatellite;
-
   /// No description provided for @mapBaseTopo.
   ///
   /// In en, this message translates to:
