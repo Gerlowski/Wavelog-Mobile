@@ -15,23 +15,37 @@ import 'settings_provider.dart';
 final radioStatusProvider = Provider<void>((ref) {
   const heartbeat = Duration(seconds: 30);
   Timer? timer;
+  // One request in flight; a change arriving meanwhile is sent right after,
+  // with the rig's state at that moment, so the last dial position always
+  // reaches Wavelog without waiting for the heartbeat.
   var busy = false;
+  var pending = false;
 
   Future<void> push() async {
-    final rig = ref.read(rigProvider);
-    final hz = rig.frequencyHz;
-    if (rig.status != RigStatus.connected || hz == null) return;
-    if (ref.read(settingsProvider).serverUrl.isEmpty || busy) return;
+    if (busy) {
+      pending = true;
+      return;
+    }
     busy = true;
     try {
-      await ref.read(wavelogRemoteDatasourceProvider).pushRadioStatus(
-            radio: rig.config.protocol.wavelogRadioName,
-            frequencyHz: hz,
-            mode: rig.mode?.appSubmode ?? rig.mode?.appMode,
-          );
-    } catch (e) {
-      // Offline, or a token without radio:write: the log works without it.
-      debugPrint('radio status push failed: $e');
+      do {
+        pending = false;
+        final rig = ref.read(rigProvider);
+        final hz = rig.frequencyHz;
+        if (rig.status != RigStatus.connected || hz == null) return;
+        if (ref.read(settingsProvider).serverUrl.isEmpty) return;
+        try {
+          await ref.read(wavelogRemoteDatasourceProvider).pushRadioStatus(
+                radio: rig.config.protocol.wavelogRadioName,
+                frequencyHz: hz,
+                mode: rig.mode?.appSubmode ?? rig.mode?.appMode,
+              );
+        } catch (e) {
+          // Offline, or a token without radio:write: the log works without it.
+          debugPrint('radio status push failed: $e');
+          return;
+        }
+      } while (pending);
     } finally {
       busy = false;
     }
