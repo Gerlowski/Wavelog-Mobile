@@ -2188,6 +2188,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scopeTestLookup => 'Поиск';
 
   @override
+  String get scopeRadioWrite => 'Report the CAT radio\'s frequency and mode';
+
+  @override
+  String get scopeTestRadio => 'Radio';
+
+  @override
   String get apiScopeGuideBtn => 'Руководство по областям доступа API';
 
   @override

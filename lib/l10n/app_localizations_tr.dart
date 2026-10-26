@@ -2176,6 +2176,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scopeTestLookup => 'Arama';
 
   @override
+  String get scopeRadioWrite =>
+      'CAT telsizin frekansını ve modunu bildir';
+
+  @override
+  String get scopeTestRadio => 'Telsiz';
+
+  @override
   String get apiScopeGuideBtn => 'API Scope Rehberi';
 
   @override

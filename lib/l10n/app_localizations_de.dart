@@ -2184,6 +2184,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get scopeTestLookup => 'Suche';
 
   @override
+  String get scopeRadioWrite => 'Report the CAT radio\'s frequency and mode';
+
+  @override
+  String get scopeTestRadio => 'Radio';
+
+  @override
   String get apiScopeGuideBtn => 'API-Scope-Leitfaden';
 
   @override

@@ -2152,6 +2152,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scopeTestLookup => '조회';
 
   @override
+  String get scopeRadioWrite => 'Report the CAT radio\'s frequency and mode';
+
+  @override
+  String get scopeTestRadio => 'Radio';
+
+  @override
   String get apiScopeGuideBtn => 'API 스코프 가이드';
 
   @override

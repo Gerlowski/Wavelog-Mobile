@@ -4222,6 +4222,18 @@ abstract class AppLocalizations {
   /// **'Lookup'**
   String get scopeTestLookup;
 
+  /// No description provided for @scopeRadioWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Report the CAT radio\'s frequency and mode'**
+  String get scopeRadioWrite;
+
+  /// No description provided for @scopeTestRadio.
+  ///
+  /// In en, this message translates to:
+  /// **'Radio'**
+  String get scopeTestRadio;
+
   /// No description provided for @apiScopeGuideBtn.
   ///
   /// In en, this message translates to:

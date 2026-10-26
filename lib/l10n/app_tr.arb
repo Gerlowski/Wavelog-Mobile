@@ -737,6 +737,8 @@
     "scopeTestConfirmation": "Onay",
     "scopeTestStatistics": "İstatistik",
     "scopeTestLookup": "Arama",
+    "scopeRadioWrite": "CAT telsizin frekansını ve modunu bildir",
+    "scopeTestRadio": "Telsiz",
     "apiScopeGuideBtn": "API Scope Rehberi",
     "apiScopeGuideTitle": "API Token Scope Rehberi",
     "apiScopeGuideIntro": "Wavelog'da yeni bir API anahtarı oluştururken (Ayarlar → API Anahtarları) tam işlevsellik için aşağıdaki tüm kapsamları seçin.",
