@@ -847,5 +847,14 @@
   "contestDupe": "DUPLIKAT: już w tych zawodach na {band} ({time} UTC)",
   "contestWorkedOn": "W tych zawodach na: {bands}",
   "keepScreenOnWhileLogging": "Nie wygaszaj ekranu podczas logowania",
-  "keepScreenOnWhileLoggingHint": "Ekran nie gaśnie, gdy otwarte jest dodawanie QSO albo log konkursowy"
+  "keepScreenOnWhileLoggingHint": "Ekran nie gaśnie, gdy otwarte jest dodawanie QSO albo log konkursowy",
+  "mapLayers": "Warstwy mapy",
+  "mapBaseAuto": "Automatyczna (jasna / ciemna)",
+  "mapBaseLight": "Jasna",
+  "mapBaseDark": "Ciemna",
+  "mapBaseSatellite": "Satelita",
+  "mapBaseTopo": "Topograficzna",
+  "mapGreatCircles": "Linie po wielkim kole od mojej stacji",
+  "mapGreyline": "Greyline",
+  "mapGreylineHint": "Strona nocna i granica dnia i nocy, na żywo"
 }

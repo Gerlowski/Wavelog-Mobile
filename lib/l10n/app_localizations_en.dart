@@ -2438,4 +2438,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get keepScreenOnWhileLoggingHint =>
       'The screen stays on while Add QSO or the contest log is open';
+
+  @override
+  String get mapLayers => 'Map layers';
+
+  @override
+  String get mapBaseAuto => 'Automatic (light / dark)';
+
+  @override
+  String get mapBaseLight => 'Light';
+
+  @override
+  String get mapBaseDark => 'Dark';
+
+  @override
+  String get mapBaseSatellite => 'Satellite';
+
+  @override
+  String get mapBaseTopo => 'Topographic';
+
+  @override
+  String get mapGreatCircles => 'Great-circle lines from my station';
+
+  @override
+  String get mapGreyline => 'Greyline';
+
+  @override
+  String get mapGreylineHint => 'Night side and the day/night boundary, now';
 }
