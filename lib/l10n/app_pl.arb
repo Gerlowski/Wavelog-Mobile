@@ -854,5 +854,6 @@
   "mapBaseTopo": "Topograficzna",
   "mapGreatCircles": "Linie po wielkim kole od mojej stacji",
   "mapGreyline": "Greyline",
-  "mapGreylineHint": "Strona nocna i granica dnia i nocy, na żywo"
+  "mapGreylineHint": "Strona nocna i granica dnia i nocy, na żywo",
+  "mapNorthUp": "Północ do góry"
 }

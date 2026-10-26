@@ -406,6 +406,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
+  /// The map's rotation in degrees, for the north-up button.
+  double _rotation = 0;
+
+  void _onMapEvent(MapEvent event) {
+    final r = event.camera.rotation;
+    // Only the button's visibility depends on it: rebuild when it flips.
+    if ((r.abs() > 0.5) != (_rotation.abs() > 0.5)) {
+      setState(() => _rotation = r);
+    } else {
+      _rotation = r;
+    }
+  }
+
   void _zoom(double delta) {
     final cam = _mapController.camera;
     _mapController.move(cam.center, (cam.zoom + delta).clamp(1.0, 18.0));
@@ -550,6 +563,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                         maxZoom: 18,
                         onTap: (tapPos, latLng) => _handleTap(tapPos, latLng, visible),
+                        onMapEvent: _onMapEvent,
+                        // As in Google Maps: whichever two-finger gesture
+                        // starts first wins, so a pinch zooms without also
+                        // turning the map; turning it takes a clear twist.
+                        interactionOptions: const InteractionOptions(
+                          enableMultiFingerGestureRace: true,
+                          rotationThreshold: 30,
+                        ),
                       ),
                       children: [
                         TileLayer(
@@ -601,6 +622,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       bottom: 16,
                       child: Column(
                         children: [
+                          // Shown while the map is turned: back to north up.
+                          if (_rotation.abs() > 0.5) ...[
+                            _ZoomButton(
+                              icon: Icons.navigation,
+                              iconAngle: _rotation * pi / 180, // layers turn by +rotation
+                              tooltip: l10n.mapNorthUp,
+                              onTap: () => _mapController.rotate(0),
+                            ),
+                            const SizedBox(height: 6),
+                          ],
                           _ZoomButton(
                             icon: Icons.add,
                             onTap: () => _zoom(1),
@@ -927,7 +958,15 @@ class _MiniChip extends StatelessWidget {
 class _ZoomButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _ZoomButton({required this.icon, required this.onTap});
+  /// Turns the icon, so the compass needle points to north.
+  final double iconAngle;
+  /// Read out by screen readers.
+  final String? tooltip;
+  const _ZoomButton(
+      {required this.icon,
+      required this.onTap,
+      this.iconAngle = 0,
+      this.tooltip});
 
   @override
   Widget build(BuildContext context) {
@@ -943,7 +982,11 @@ class _ZoomButton extends StatelessWidget {
         child: SizedBox(
           width: 38,
           height: 38,
-          child: Icon(icon, size: 20, color: cs.onSurface),
+          child: Transform.rotate(
+            angle: iconAngle,
+            child: Icon(icon,
+                size: 20, color: cs.onSurface, semanticLabel: tooltip),
+          ),
         ),
       ),
     );
