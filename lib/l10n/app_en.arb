@@ -1635,8 +1635,6 @@
   "@mapBaseLight": {},
   "mapBaseDark": "Dark",
   "@mapBaseDark": {},
-  "mapBaseSatellite": "Satellite",
-  "@mapBaseSatellite": {},
   "mapBaseTopo": "Topographic",
   "@mapBaseTopo": {},
   "mapGreatCircles": "Great-circle lines from my station",

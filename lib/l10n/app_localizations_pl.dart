@@ -2452,9 +2452,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get mapBaseDark => 'Ciemna';
 
   @override
-  String get mapBaseSatellite => 'Satelita';
-
-  @override
   String get mapBaseTopo => 'Topograficzna';
 
   @override

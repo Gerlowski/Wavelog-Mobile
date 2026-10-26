@@ -2448,9 +2448,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get mapBaseDark => 'Dark';
 
   @override
-  String get mapBaseSatellite => 'Satellite';
-
-  @override
   String get mapBaseTopo => 'Topographic';
 
   @override

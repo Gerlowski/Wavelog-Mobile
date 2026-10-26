@@ -850,7 +850,6 @@
   "mapBaseAuto": "Automatyczna (jasna / ciemna)",
   "mapBaseLight": "Jasna",
   "mapBaseDark": "Ciemna",
-  "mapBaseSatellite": "Satelita",
   "mapBaseTopo": "Topograficzna",
   "mapGreatCircles": "Linie po wielkim kole od mojej stacji",
   "mapGreyline": "Greyline",
