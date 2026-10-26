@@ -1626,5 +1626,9 @@
   "keepScreenOnWhileLogging": "Keep the screen on while logging",
   "@keepScreenOnWhileLogging": {},
   "keepScreenOnWhileLoggingHint": "The screen stays on while Add QSO or the contest log is open",
-  "@keepScreenOnWhileLoggingHint": {}
+  "@keepScreenOnWhileLoggingHint": {},
+  "contestDupe": "DUPE: already in this contest on {band} ({time} UTC)",
+  "@contestDupe": {"placeholders": {"band": {"type": "String"}, "time": {"type": "String"}}},
+  "contestWorkedOn": "In this contest on: {bands}",
+  "@contestWorkedOn": {"placeholders": {"bands": {"type": "String"}}}
 }

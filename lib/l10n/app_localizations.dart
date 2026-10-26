@@ -4665,6 +4665,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The screen stays on while Add QSO or the contest log is open'**
   String get keepScreenOnWhileLoggingHint;
+
+  /// No description provided for @contestDupe.
+  ///
+  /// In en, this message translates to:
+  /// **'DUPE: already in this contest on {band} ({time} UTC)'**
+  String contestDupe(String band, String time);
+
+  /// No description provided for @contestWorkedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'In this contest on: {bands}'**
+  String contestWorkedOn(String bands);
 }
 
 class _AppLocalizationsDelegate
