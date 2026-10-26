@@ -845,5 +845,14 @@
   "potaActivationProgress": "{park}: {count}/{needed} QSO dziś (UTC)",
   "potaActivationDone": "{park}: aktywacja zaliczona ({count} QSO dziś)",
   "contestDupe": "DUPLIKAT: już w tych zawodach na {band} ({time} UTC)",
-  "contestWorkedOn": "W tych zawodach na: {bands}"
+  "contestWorkedOn": "W tych zawodach na: {bands}",
+  "mapLayers": "Warstwy mapy",
+  "mapBaseAuto": "Automatyczna (jasna / ciemna)",
+  "mapBaseLight": "Jasna",
+  "mapBaseDark": "Ciemna",
+  "mapBaseSatellite": "Satelita",
+  "mapBaseTopo": "Topograficzna",
+  "mapGreatCircles": "Linie po wielkim kole od mojej stacji",
+  "mapGreyline": "Greyline",
+  "mapGreylineHint": "Strona nocna i granica dnia i nocy, na żywo"
 }

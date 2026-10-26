@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -8,13 +9,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/utils/error_l10n.dart';
+import '../../../core/utils/geo_utils.dart';
+import '../../../core/utils/map_geo.dart';
 import '../../../core/utils/worked_before.dart';
 import '../../../core/utils/l10n_extension.dart';
 import '../../../core/utils/qso_scope.dart';
 import '../../../data/models/qso_model.dart';
 import '../../../providers/qso_provider.dart';
+import '../../../providers/settings_provider.dart';
+import '../../../providers/station_provider.dart';
 import '../../../providers/worked_before_provider.dart';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -147,6 +153,58 @@ final _mapMarkersProvider = FutureProvider<List<_QsoMarker>>((ref) async {
   return compute(_processQsoData, raw);
 });
 
+// ── Base maps ─────────────────────────────────────────────────────────────────
+
+/// The map backgrounds to choose from. [auto] is light or dark with the
+/// app's theme. All are free to use with the attribution shown on the map.
+enum _BaseMap {
+  auto,
+  light,
+  dark,
+  satellite,
+  topo;
+
+  static _BaseMap fromName(String? name) =>
+      values.firstWhere((b) => b.name == name, orElse: () => auto);
+}
+
+class _Tiles {
+  final String url;
+  final List<String> subdomains;
+  final int maxZoom;
+  final String attribution;
+  const _Tiles(this.url, this.attribution,
+      {this.subdomains = const [], this.maxZoom = 19});
+}
+
+const _cartoAttribution = '© OpenStreetMap  © CARTO';
+
+_Tiles _tilesFor(_BaseMap base, bool isDark) => switch (base) {
+      _BaseMap.auto => _tilesFor(isDark ? _BaseMap.dark : _BaseMap.light, isDark),
+      _BaseMap.light => const _Tiles(
+          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+          _cartoAttribution,
+          subdomains: ['a', 'b', 'c', 'd'],
+          maxZoom: 20),
+      _BaseMap.dark => const _Tiles(
+          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+          _cartoAttribution,
+          subdomains: ['a', 'b', 'c', 'd'],
+          maxZoom: 20),
+      _BaseMap.satellite => const _Tiles(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          '© Esri, Maxar, Earthstar Geographics'),
+      _BaseMap.topo => const _Tiles(
+          'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          '© OpenStreetMap  © OpenTopoMap (CC-BY-SA)',
+          subdomains: ['a', 'b', 'c'],
+          maxZoom: 17),
+    };
+
+/// Lines to more stations than this are left out: thousands of curves make
+/// the map slow and unreadable.
+const _kMaxGreatCircles = 300;
+
 // ── Band colours ──────────────────────────────────────────────────────────────
 
 const _kBandColors = <String, Color>{
@@ -181,6 +239,125 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   String _bandFilter = 'All';
   _QsoMarker? _popup;
   Offset? _popupPos; // position within the map Stack
+
+  static const _kBaseKey = 'wl_map_base';
+  static const _kLinesKey = 'wl_map_great_circles';
+  static const _kGreylineKey = 'wl_map_greyline';
+  _BaseMap _base = _BaseMap.auto;
+  bool _showLines = true;
+  bool _showGreyline = true;
+  // The greyline moves about a degree every four minutes.
+  Timer? _greylineTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+    _greylineTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted && _showGreyline) setState(() {});
+    });
+  }
+
+  Future<void> _loadPrefs() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() {
+        _base = _BaseMap.fromName(p.getString(_kBaseKey));
+        _showLines = p.getBool(_kLinesKey) ?? true;
+        _showGreyline = p.getBool(_kGreylineKey) ?? true;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _savePrefs() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      await p.setString(_kBaseKey, _base.name);
+      await p.setBool(_kLinesKey, _showLines);
+      await p.setBool(_kGreylineKey, _showGreyline);
+    } catch (_) {}
+  }
+
+  /// The active station location, from its grid.
+  LatLng? _stationPoint() {
+    final id = ref.watch(settingsProvider.select((s) => s.activeStationProfileId));
+    final station = ref
+        .watch(stationProvider)
+        .valueOrNull
+        ?.where((s) => s.id == id)
+        .firstOrNull;
+    final ll = maidenheadToLatLon(station?.gridSquare ?? '');
+    return ll == null ? null : LatLng(ll.lat, ll.lon);
+  }
+
+  Future<void> _openLayers() async {
+    final l10n = context.l10n;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) {
+          void update(VoidCallback change) {
+            setState(change);
+            setS(() {});
+            _savePrefs();
+          }
+
+          final names = {
+            _BaseMap.auto: l10n.mapBaseAuto,
+            _BaseMap.light: l10n.mapBaseLight,
+            _BaseMap.dark: l10n.mapBaseDark,
+            _BaseMap.satellite: l10n.mapBaseSatellite,
+            _BaseMap.topo: l10n.mapBaseTopo,
+          };
+          return SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                    child: Text(l10n.mapLayers,
+                        style: Theme.of(ctx).textTheme.titleMedium),
+                  ),
+                  RadioGroup<_BaseMap>(
+                    groupValue: _base,
+                    onChanged: (v) => update(() => _base = v ?? _base),
+                    child: Column(children: [
+                      for (final b in _BaseMap.values)
+                        RadioListTile<_BaseMap>(
+                          dense: true,
+                          title: Text(names[b]!),
+                          value: b,
+                        ),
+                    ]),
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    dense: true,
+                    secondary: const Icon(Icons.timeline),
+                    title: Text(l10n.mapGreatCircles),
+                    value: _showLines,
+                    onChanged: (v) => update(() => _showLines = v),
+                  ),
+                  SwitchListTile(
+                    dense: true,
+                    secondary: const Icon(Icons.wb_twilight),
+                    title: Text(l10n.mapGreyline),
+                    subtitle: Text(l10n.mapGreylineHint),
+                    value: _showGreyline,
+                    onChanged: (v) => update(() => _showGreyline = v),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   List<_QsoMarker> _filter(List<_QsoMarker> all) =>
       _bandFilter == 'All' ? all : all.where((m) => m.band == _bandFilter).toList();
@@ -233,6 +410,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   void dispose() {
+    _greylineTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -244,14 +422,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final tileUrl = isDark
-        ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    final tiles = _tilesFor(_base, isDark);
+    final station = _stationPoint();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.mapTitle),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.layers_outlined),
+            tooltip: l10n.mapLayers,
+            onPressed: _openLayers,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
@@ -295,6 +477,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 borderColor: Colors.white.withValues(alpha: 0.55),
                 borderStrokeWidth: 1.2,
               )).toList();
+
+          final lines = !_showLines || station == null
+              ? const <Polyline>[]
+              : [
+                  for (final m in visible.take(_kMaxGreatCircles))
+                    for (final run in greatCircle(station, m.point, segments: 32))
+                      Polyline(
+                        points: run,
+                        strokeWidth: 1,
+                        color: _bandColor(m.band).withValues(alpha: 0.45),
+                      ),
+                ];
 
           return Column(
             children: [
@@ -346,11 +540,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate: tileUrl,
+                          urlTemplate: tiles.url,
+                          subdomains: tiles.subdomains,
                           userAgentPackageName: 'com.wavelog_mobile',
+                          maxNativeZoom: tiles.maxZoom,
                           maxZoom: 19,
                         ),
+                        if (_showGreyline)
+                          PolygonLayer(polygons: [
+                            Polygon(
+                              points: nightPolygon(DateTime.now().toUtc()),
+                              color: Colors.black.withValues(alpha: 0.28),
+                              borderColor: Colors.amber.withValues(alpha: 0.6),
+                              borderStrokeWidth: 1,
+                            ),
+                          ]),
+                        if (lines.isNotEmpty) PolylineLayer(polylines: lines),
                         CircleLayer(circles: circles),
+                        if (station != null)
+                          MarkerLayer(markers: [
+                            Marker(
+                              point: station,
+                              width: 30,
+                              height: 30,
+                              child: Icon(Icons.cell_tower,
+                                  size: 26,
+                                  color: cs.primary,
+                                  shadows: const [
+                                    Shadow(color: Colors.black54, blurRadius: 4)
+                                  ]),
+                            ),
+                          ]),
                       ],
                     ),
 
@@ -414,7 +634,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ],
                     const Spacer(),
                     Text(
-                      '© CARTO  © OpenStreetMap',
+                      tiles.attribution,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: cs.onSurface.withValues(alpha: 0.35),
                             fontSize: 9,
