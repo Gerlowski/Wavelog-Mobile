@@ -3,6 +3,9 @@ import 'dart:math';
 import 'package:latlong2/latlong.dart';
 
 const _rad = pi / 180;
+
+/// The latitude where a Web Mercator map ends.
+const kWebMercatorMaxLat = 85.05112878;
 const _deg = 180 / pi;
 
 /// The great-circle path from [a] to [b] as [segments] + 1 points, split
@@ -60,8 +63,9 @@ List<LatLng> nightPolygon(DateTime utc, {double step = 2}) {
     final lat = atan(-cos(ha) / tan(dec)) * _deg;
     points.add(LatLng(lat, lon));
   }
-  // The pole away from the sun is the dark one.
-  final darkPole = dec > 0 ? -90.0 : 90.0;
+  // The pole away from the sun is the dark one. Closed at the web map's
+  // edge (85.05°), not at 90°: Web Mercator puts the pole at infinity.
+  final darkPole = dec > 0 ? -kWebMercatorMaxLat : kWebMercatorMaxLat;
   return [
     ...points,
     LatLng(darkPole, 180),
