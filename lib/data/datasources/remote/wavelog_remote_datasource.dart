@@ -822,17 +822,19 @@ class WavelogRemoteDatasource {
     }
   }
 
-  /// Logs one QSO and links it to contest session [contestSessionId].
+  /// Creates one QSO, given as a one-record ADIF string, and returns its
+  /// server id (null when the server already had it).
   ///
-  /// Sent as a single JSON QSO, not as an ADIF import: only the JSON create
-  /// answers with the new QSO's id, and the link needs it. (An ADIF import
-  /// answers with counts only, so no QSO was ever linked.) The JSON body
-  /// takes the ADIF field names; only FREQ / FREQ_RX are in Hz there.
-  Future<void> logContestQso({
-    required int contestSessionId,
-    required int stationProfileId,
-    required String adifString,
-  }) async {
+  /// Sent as a single JSON QSO, not as an ADIF import, for two reasons only
+  /// the JSON create gives: it answers with the new QSO's id, and it runs
+  /// the station's real-time exports (QRZ.com, ClubLog, HRDLog "live"
+  /// uploads), which Wavelog skips for ADIF imports. The JSON body takes the
+  /// ADIF field names; only FREQ / FREQ_RX are in Hz there.
+  ///
+  /// A QSO the server already has is answered with a validation error that
+  /// lists it as a duplicate; that counts as saved, as the ADIF import's
+  /// "skipped" did.
+  Future<int?> createQso(String adifString, int stationProfileId) async {
     final record = AdifParser.parse(adifString).firstOrNull;
     if (record == null) throw const ServerException('Empty ADIF record');
     final body = <String, dynamic>{
@@ -844,18 +846,36 @@ class WavelogRemoteDatasource {
       body[key.toLowerCase()] = mhz != null ? (mhz * 1e6).round() : value;
     }
 
-    int? qsoId;
     try {
       final response = await _dio.post(ApiEndpoints.qso, data: body);
       final raw = response.data;
-      if (raw is Map) {
-        final d = raw['data'];
-        qsoId = _parseInt(d is Map ? d['id'] : null);
-      }
+      final d = raw is Map ? raw['data'] : null;
+      return _parseInt(d is Map ? d['id'] : null);
     } on DioException catch (e) {
+      if (_isOnlyDuplicate(e)) return null;
       throw _mapDioException(e);
     }
+  }
 
+  /// Whether [e] is the JSON create's answer for a QSO that already exists:
+  /// a 400 whose details list duplicates and nothing else.
+  static bool _isOnlyDuplicate(DioException e) {
+    if (e.response?.statusCode != 400) return false;
+    final data = e.response?.data;
+    final error = data is Map ? data['error'] : null;
+    final details = error is Map ? error['details'] : null;
+    if (details is! Map) return false;
+    bool has(String k) => details[k] is List && (details[k] as List).isNotEmpty;
+    return has('duplicate') && !has('critical') && !has('validation');
+  }
+
+  /// Logs one QSO and links it to contest session [contestSessionId].
+  Future<void> logContestQso({
+    required int contestSessionId,
+    required int stationProfileId,
+    required String adifString,
+  }) async {
+    final qsoId = await createQso(adifString, stationProfileId);
     if (qsoId != null && qsoId > 0) {
       try {
         await _dio.patch(

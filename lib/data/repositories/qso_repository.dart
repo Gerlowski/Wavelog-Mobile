@@ -303,8 +303,8 @@ class QsoRepository {
           stationProfileId: qso.stationProfileId,
           adifString: adif,
         );
-      } else if (!await _remote.importQso(adif, qso.stationProfileId)) {
-        throw const ServerException('QSO kaydedilemedi');
+      } else {
+        await _remote.createQso(adif, qso.stationProfileId);
       }
       await _local.saveLocalQso(qso.copyWith(synced: true));
     } on NetworkException {

@@ -34,16 +34,16 @@ class _FakeCache extends QsoCacheDatasource {
 
 class _FakeRemote extends WavelogRemoteDatasource {
   final Object? error;
-  int imports = 0;
+  int creates = 0;
   final contestLogs = <int>[];
 
   _FakeRemote({this.error}) : super(dio: Dio());
 
   @override
-  Future<bool> importQso(String adifData, int stationProfileId) async {
-    imports++;
+  Future<int?> createQso(String adifString, int stationProfileId) async {
+    creates++;
     if (error != null) throw error!;
-    return true;
+    return 42;
   }
 
   @override
@@ -66,7 +66,7 @@ void main() {
           .addQso(_qso, contestSessionId: 7);
 
       expect(remote.contestLogs, [7]);
-      expect(remote.imports, 0);
+      expect(remote.creates, 0);
       // Synced: the next sync must not upload it a second time.
       expect(cache.saved.single.synced, isTrue);
     });
@@ -81,11 +81,11 @@ void main() {
       expect(cache.saved.single.synced, isFalse);
     });
 
-    test('without a session it is a plain import', () async {
+    test('without a session it is a single JSON create', () async {
       final remote = _FakeRemote();
       final cache = _FakeCache();
       await QsoRepository(remote: remote, local: cache).addQso(_qso);
-      expect(remote.imports, 1);
+      expect(remote.creates, 1);
       expect(remote.contestLogs, isEmpty);
       expect(cache.saved.single.synced, isTrue);
     });
