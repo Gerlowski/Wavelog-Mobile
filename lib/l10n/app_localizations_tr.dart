@@ -1381,6 +1381,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get spotLoadError => 'Spotlar yüklenemedi';
 
   @override
+  String spotOfflineSince(String time) {
+    return 'No connection — spots from $time';
+  }
+
+  @override
   String get spotActivator => 'Aktivatör Çağrısı';
 
   @override
